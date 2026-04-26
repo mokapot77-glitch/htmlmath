@@ -1,0 +1,3548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Height Hunter 🔺</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0d1b2e;--chalk:#f0ece0;--chalk-dim:#9aacb8;
+  --accent:#f9d030;--green:#3de88a;--red:#ff5f7a;
+  --blue:#5bc8ff;--purple:#b07eff;
+  --panel:#0a1524;--panel2:#111f35;--border:#1e3555;
+  --glow-gold:rgba(249,208,48,.35);--glow-green:rgba(61,232,138,.3);
+  --glow-blue:rgba(91,200,255,.3);--glow-purple:rgba(176,126,255,.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Baloo 2',cursive;background:var(--board);color:var(--chalk);
+  height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none;}
+
+/* ── STAR BACKGROUND ── */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 34% 7%,  rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 67% 23%, rgba(255,255,255,.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 83% 11%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 92% 41%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 5%  72%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 48% 88%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 76% 79%, rgba(255,255,255,.4) 0%, transparent 100%);
+}
+
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;gap:8px;
+  background:linear-gradient(180deg,#0e2040 0%,#0a1524 100%);
+  border-bottom:2px solid #1e3555;
+  box-shadow:0 2px 20px rgba(0,0,0,.5);
+  padding:7px 14px;flex-shrink:0;flex-wrap:wrap;position:relative;z-index:10;}
+#topbar h1{font-size:1.3rem;font-weight:800;
+  background:linear-gradient(135deg,var(--accent),#ffaa00);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;white-space:nowrap;text-shadow:none;
+  filter:drop-shadow(0 0 8px rgba(249,208,48,.6));}
+.score-chip{
+  background:linear-gradient(135deg,#111f35,#0d1b2e);
+  border:1.5px solid #2a4570;border-radius:20px;
+  padding:3px 12px;font-size:.85rem;font-weight:700;white-space:nowrap;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);}
+.score-chip span{color:var(--accent);}
+.tb-sep{flex:1;}
+.toggle-btn{
+  background:linear-gradient(135deg,#111f35,#0d1b2e);
+  border:1.5px solid #2a4570;color:var(--chalk-dim);
+  border-radius:20px;padding:5px 14px;
+  font-family:'Baloo 2',cursive;font-size:.82rem;font-weight:700;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);}
+.toggle-btn.on{
+  background:linear-gradient(135deg,#f9d030,#d4a800);
+  color:#1a1000;border-color:#f9d030;
+  box-shadow:0 0 12px var(--glow-gold),0 2px 6px rgba(0,0,0,.3);}
+.toggle-btn:hover{border-color:var(--accent);color:var(--accent);}
+.action-btn{
+  background:linear-gradient(135deg,#f9d030,#e8b800);
+  color:#1a1000;border:none;border-radius:20px;
+  padding:5px 16px;font-family:'Baloo 2',cursive;font-size:.88rem;font-weight:800;
+  cursor:pointer;transition:all .18s;white-space:nowrap;
+  box-shadow:0 3px 10px rgba(249,208,48,.35);}
+.action-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px var(--glow-gold);}
+.action-btn:active{transform:translateY(0);}
+.action-btn.red{
+  background:linear-gradient(135deg,#ff5f7a,#e0344f);
+  color:#fff;box-shadow:0 3px 10px rgba(255,95,122,.3);}
+.action-btn.red:hover{box-shadow:0 6px 18px rgba(255,95,122,.5);}
+.action-btn.green{
+  background:linear-gradient(135deg,#3de88a,#1db863);
+  color:#051a0e;box-shadow:0 3px 10px rgba(61,232,138,.3);}
+
+/* ── MAIN LAYOUT ── */
+#main{display:flex;flex:1;overflow:hidden;position:relative;z-index:1;}
+#sidebar{display:none;}
+
+/* Triangle type buttons */
+.toggle-btn[id^="catBtn"]{
+  border-radius:12px;padding:8px 10px;text-align:left;font-size:.88rem;
+  display:flex;align-items:center;gap:6px;}
+.toggle-btn[id^="catBtn"].on{
+  background:linear-gradient(135deg,rgba(249,208,48,.2),rgba(249,208,48,.05));
+  border-color:var(--accent);color:var(--accent);}
+
+/* Phase badge */
+.phase-badge{border-radius:14px;padding:9px 11px;font-family:'Patrick Hand',cursive;
+  font-size:1rem;line-height:1.45;border:1.5px solid;}
+.phase-badge strong{display:block;font-family:'Baloo 2',cursive;font-size:.78rem;
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+.phase-1{
+  background:linear-gradient(135deg,rgba(249,208,48,.12),rgba(249,208,48,.03));
+  border-color:rgba(249,208,48,.5);color:#e8d060;}
+.phase-2{
+  background:linear-gradient(135deg,rgba(61,232,138,.12),rgba(61,232,138,.03));
+  border-color:rgba(61,232,138,.5);color:#8ee8b0;}
+.hint-box{
+  background:linear-gradient(135deg,#111f35,#0d1b2e);
+  border:1.5px solid #1e3555;border-radius:12px;
+  padding:10px 11px;font-family:'Patrick Hand',cursive;
+  font-size:1rem;color:var(--chalk-dim);line-height:1.5;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+.hint-box strong{color:var(--accent);}
+
+#canvasWrap{flex:1;position:relative;overflow:hidden;}
+#gameCanvas{display:block;}
+
+/* ── FEEDBACK BAR (above bottom bar) ── */
+#feedbackBar{
+  position:relative;z-index:11;flex-shrink:0;
+  background:linear-gradient(180deg,#091420 0%,#0a1a2e 100%);
+  border-top:1.5px solid #1e3355;
+  padding:6px 16px;
+  display:flex;align-items:center;gap:10px;
+  min-height:34px;}
+#feedback{flex:1;font-size:.92rem;font-weight:700;white-space:normal;word-break:break-word;}
+#hintRow{font-size:.82rem;color:var(--chalk-dim);font-family:'Patrick Hand',cursive;flex:1;display:none;}
+
+/* ── BOTTOM BAR ── */
+#bottombar{
+  background:linear-gradient(180deg,#0a1524 0%,#0e2040 100%);
+  border-top:2px solid #1e3555;
+  box-shadow:0 -2px 20px rgba(0,0,0,.4);
+  padding:7px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0;
+  position:relative;z-index:10;}
+#phaseLabel{font-size:.82rem;font-weight:700;color:var(--chalk-dim);white-space:nowrap;flex-shrink:0;}
+.fb-good{color:var(--green);text-shadow:0 0 10px var(--glow-green);}
+.fb-try{color:var(--red);}
+.fb-info{color:var(--accent);}
+.fb-warn{color:#ffb347;}
+#attRow{color:var(--chalk-dim);font-size:.8rem;white-space:nowrap;}
+
+/* ── OVERLAYS shared ── */
+.overlay-box{
+  background:linear-gradient(160deg,#0e2040 0%,#091525 100%);
+  border-radius:28px;max-height:88vh;overflow-y:auto;
+  box-shadow:0 24px 80px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06);
+  animation:popUp .45s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popUp{from{transform:scale(.7) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+
+/* ── CELEBRATION ── */
+#celebOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+  backdrop-filter:blur(4px);z-index:200;padding:20px;align-items:center;justify-content:center;}
+#celebOverlay.show{display:flex;}
+.celeb-box{
+  background:linear-gradient(160deg,#0e2040,#091525);
+  border:2.5px solid var(--accent);border-radius:28px;
+  padding:36px 48px;text-align:center;
+  max-height:88vh;overflow-y:auto;
+  box-shadow:0 0 40px var(--glow-gold),0 24px 80px rgba(0,0,0,.7);
+  animation:popUp .45s cubic-bezier(.34,1.56,.64,1);}
+.celeb-box h2{font-size:2.4rem;
+  background:linear-gradient(135deg,var(--accent),#ff9500);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:8px;}
+.celeb-box p{color:var(--chalk-dim);margin-bottom:18px;font-size:1.2rem;}
+.conf{position:fixed;pointer-events:none;z-index:600;animation:confFall linear forwards;}
+@keyframes confFall{0%{transform:translateY(-10px) rotate(0deg);opacity:1}
+  100%{transform:translateY(100vh) rotate(600deg);opacity:0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+</style>
+</head>
+<body>
+<div id="modeNavBar" style="position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:linear-gradient(180deg,#070f1e,#0a1524);
+  border-bottom:2px solid #1e3555;padding:7px 14px;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 2px 20px rgba(0,0,0,.6);"></div>
+<!-- SAVE POPOVER -->
+<div id="savePopover" style="display:none;position:fixed;top:54px;right:160px;z-index:20000;
+  background:linear-gradient(160deg,#0e2040,#091525);border:2px solid #5bc8ff;
+  border-radius:14px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.7);
+  flex-direction:column;gap:8px;align-items:center;min-width:200px;">
+  <div style="font-family:'Baloo 2',cursive;font-size:.9rem;color:#5bc8ff;font-weight:700;">Enter register number</div>
+  <input id="saveRegInput" type="number" min="1" max="42" placeholder="1 – 42"
+    style="width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid #2a4570;
+    background:#0a1524;color:#f0ece0;font-family:'Baloo 2',cursive;font-size:1rem;
+    text-align:center;outline:none;"
+    onkeydown="if(event.key==='Enter')confirmSave();if(event.key==='Escape')closeSavePopover();">
+  <div style="display:flex;gap:8px;width:100%;">
+    <button onclick="confirmSave()" style="flex:1;background:linear-gradient(135deg,#5bc8ff,#2a8fc0);
+      border:none;border-radius:10px;padding:8px;color:#051020;
+      font-family:'Baloo 2',cursive;font-weight:800;font-size:.88rem;cursor:pointer;">💾 Save</button>
+    <button onclick="closeSavePopover()" style="flex:1;background:#1e3555;border:none;
+      border-radius:10px;padding:8px;color:#9aacb8;
+      font-family:'Baloo 2',cursive;font-weight:700;font-size:.88rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+<div style="height:44px;flex-shrink:0;"></div>
+
+<!-- PROGRESS CARD OVERLAY -->
+<div id="progressCardOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:20001;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)closeProgressCard()">
+  <div onclick="event.stopPropagation()" style="background:linear-gradient(160deg,#0e2040,#091525);border:2.5px solid #5bc8ff;border-radius:24px;padding:24px;max-width:560px;width:95%;text-align:center;box-shadow:0 0 40px rgba(91,200,255,.2),0 24px 80px rgba(0,0,0,.7);animation:popUp .4s cubic-bezier(.34,1.56,.64,1);">
+    <canvas id="progressCardCanvas" width="520" height="360" style="border-radius:12px;max-width:100%;display:block;margin:0 auto;"></canvas>
+    <button onclick="closeProgressCard()" style="margin-top:16px;background:linear-gradient(135deg,#5bc8ff,#2a8fc0);border:none;border-radius:14px;padding:10px 32px;color:#051020;font-family:'Baloo 2',cursive;font-weight:800;font-size:.95rem;cursor:pointer;">OK ✓</button>
+  </div>
+</div>
+
+<!-- PASSWORD GATE -->
+<div id="navPwOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(10px);z-index:10001;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:linear-gradient(160deg,#0e2040,#091525);border:2px solid #f9d030;border-radius:24px;padding:32px 36px;max-width:360px;width:92%;text-align:center;box-shadow:0 0 40px rgba(249,208,48,.2),0 24px 80px rgba(0,0,0,.8);animation:popUp .35s cubic-bezier(.34,1.56,.64,1);">
+    <div style="font-size:2.4rem;margin-bottom:10px;">🔐</div>
+    <h2 style="font-family:'Baloo 2',cursive;font-size:1.3rem;color:#f9d030;margin-bottom:6px;">Admin Access</h2>
+    <p style="font-family:'Patrick Hand',cursive;font-size:.9rem;color:#9aacb8;margin-bottom:16px;">Enter the admin password to change mode links.</p>
+    <input id="navPwInput" type="password" placeholder="Password"
+      style="width:100%;padding:10px 14px;border-radius:12px;border:1.5px solid #1e3555;
+      background:#0a1524;color:#f0ece0;font-family:'Patrick Hand',cursive;font-size:1rem;
+      outline:none;margin-bottom:8px;text-align:center;letter-spacing:3px;"
+      onkeydown="if(event.key==='Enter')checkNavPassword()">
+    <div id="navPwError" style="display:none;color:#ff5f7a;font-family:'Patrick Hand',cursive;font-size:.88rem;margin-bottom:8px;">❌ Incorrect password. Try again.</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:8px;">
+      <button onclick="closeNavPassword()" style="background:#1e3555;border:none;border-radius:12px;padding:8px 20px;color:#9aacb8;font-family:'Baloo 2',cursive;font-weight:700;font-size:.88rem;cursor:pointer;">Cancel</button>
+      <button onclick="checkNavPassword()" style="background:linear-gradient(135deg,#f9d030,#e8b800);border:none;border-radius:12px;padding:8px 24px;color:#1a1000;font-family:'Baloo 2',cursive;font-weight:800;font-size:.88rem;cursor:pointer;">Enter ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV SETTINGS OVERLAY -->
+<div id="navSettingsOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:linear-gradient(160deg,#0e2040,#091525);border:2px solid #f9d030;border-radius:24px;padding:28px 32px;max-width:460px;width:92%;box-shadow:0 0 40px rgba(249,208,48,.2),0 24px 80px rgba(0,0,0,.7);animation:popUp .35s cubic-bezier(.34,1.56,.64,1);">
+    <h2 style="font-family:'Baloo 2',cursive;font-size:1.4rem;color:#f9d030;margin-bottom:6px;">⚙️ Set Mode Links</h2>
+    <p style="font-family:'Patrick Hand',cursive;font-size:.9rem;color:#9aacb8;margin-bottom:18px;line-height:1.5;">Enter the URL or filename for each triangle type. Leave blank to use the default filename.</p>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+      <label style="font-family:'Baloo 2',cursive;font-size:.85rem;font-weight:800;color:#5bc8ff;">🔵 Right-angle link
+        <input id="navLinkRight" type="text" placeholder="height_hunter_right.html"
+          style="display:block;width:100%;margin-top:4px;padding:8px 12px;border-radius:10px;
+          border:1.5px solid #1e3555;background:#0a1524;color:#f0ece0;
+          font-family:'Patrick Hand',cursive;font-size:.95rem;outline:none;">
+      </label>
+      <label style="font-family:'Baloo 2',cursive;font-size:.85rem;font-weight:800;color:#3de88a;">🟢 Acute link
+        <input id="navLinkAcute" type="text" placeholder="height_hunter_acute.html"
+          style="display:block;width:100%;margin-top:4px;padding:8px 12px;border-radius:10px;
+          border:1.5px solid #1e3555;background:#0a1524;color:#f0ece0;
+          font-family:'Patrick Hand',cursive;font-size:.95rem;outline:none;">
+      </label>
+      <label style="font-family:'Baloo 2',cursive;font-size:.85rem;font-weight:800;color:#b07eff;">🟣 Obtuse link
+        <input id="navLinkObtuse" type="text" placeholder="height_hunter_obtuse.html"
+          style="display:block;width:100%;margin-top:4px;padding:8px 12px;border-radius:10px;
+          border:1.5px solid #1e3555;background:#0a1524;color:#f0ece0;
+          font-family:'Patrick Hand',cursive;font-size:.95rem;outline:none;">
+      </label>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeNavSettings()" style="background:#1e3555;border:none;border-radius:14px;padding:8px 20px;color:#9aacb8;font-family:'Baloo 2',cursive;font-weight:700;font-size:.88rem;cursor:pointer;">Cancel</button>
+      <button onclick="saveNavSettings()" style="background:linear-gradient(135deg,#f9d030,#e8b800);border:none;border-radius:14px;padding:8px 24px;color:#1a1000;font-family:'Baloo 2',cursive;font-weight:800;font-size:.88rem;cursor:pointer;box-shadow:0 3px 10px rgba(249,208,48,.35);">Save Links ✓</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="topbar">
+  <h1>🔺 Height Hunter</h1>
+  <div class="score-chip">Level <span id="levelNum">1</span></div>
+  <div class="score-chip">⭐ <span id="starCount">0</span></div>
+  <div class="score-chip">🔥 <span id="streak">0</span></div>
+  <div class="tb-sep"></div>
+  <button class="toggle-btn" id="gridBtn"  onclick="toggleGrid()">⊞ Grid</button>
+  <button class="toggle-btn" id="extBtn"   onclick="toggleExtension()">⟵⟶ Extend Base</button>
+  <button class="toggle-btn" id="setsqBtn" onclick="toggleSetSquare()">📐 Set Square</button>
+  <button class="toggle-btn" id="moveBtn"  onclick="toggleMoveMode()">✋ Move</button>
+  <button class="toggle-btn" id="rotBtn"   onclick="toggleRotMode()">🔄 Rotate</button>
+  <button class="toggle-btn" id="scaleBtn" onclick="toggleScaleMode()">⤡ Resize</button>
+  <button class="action-btn" style="background:#192333;color:#f4c842;border:2px solid #f4c842;" onclick="openCollection()">📚 Book</button>
+  <button class="action-btn" style="background:#0d2040;color:#5bc8ff;border:2px solid #5bc8ff;" id="saveBtn" onclick="openSavePopover()">💾 Save</button>
+  <button class="action-btn" style="background:#0d2040;color:#3de88a;border:2px solid #3de88a;" onclick="loadProgress()">📂 Load</button>
+  <button class="action-btn" style="background:#1a1a3a;color:#c084fc;border:2px solid #c084fc;" onclick="openChatbot()">🤖 Help</button>
+</div>
+
+<div id="main">
+  <!-- Sidebar removed — ghost elements keep JS refs alive -->
+  <div id="sidebar" style="display:none;">
+    <div id="step1badge"></div>
+    <div id="step2badge"><span id="hintBox"></span></div>
+    <div id="modeBadge"></div>
+  </div>
+
+  <div id="canvasWrap"><canvas id="gameCanvas"></canvas></div>
+</div>
+
+<div id="feedbackBar">
+  <span id="feedback" class="fb-info"></span>
+  <span id="hintBannerInline" style="display:none;font-size:.85rem;font-family:'Patrick Hand',cursive;color:#9aacb8;border-left:2px solid #2a4570;padding-left:10px;flex-shrink:0;max-width:45%;"></span>
+</div>
+
+<div id="bottombar">
+  <span id="phaseLabel">Phase 1 — Pick a Base</span>
+  <span id="attRow">Tries: <span id="attCount">0</span></span>
+  <button class="action-btn" id="checkBtn" onclick="checkAnswer()" style="display:none;">✓ Check!</button>
+  <button class="action-btn green" id="nextBtn" onclick="nextChallenge()" style="display:none;">Next ▶</button>
+  <button class="action-btn red" id="clearBtn" onclick="clearAll()">✗ Reset</button>
+  <button class="action-btn red" onclick="restartGame()" style="background:#5a1a2a;">🔄 Restart</button>
+</div>
+
+<!-- SET SQUARE PROMPT OVERLAY -->
+<div id="sqPromptOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:600;align-items:center;justify-content:center;pointer-events:none;">
+  <div style="background:linear-gradient(160deg,#0e2040,#091525);border:2.5px solid #f9d030;border-radius:24px;padding:28px 36px;max-width:460px;width:90%;text-align:center;box-shadow:0 0 40px rgba(249,208,48,.25),0 24px 80px rgba(0,0,0,.7);animation:popUp .4s cubic-bezier(.34,1.56,.64,1);pointer-events:auto;">
+    <div style="font-size:2.8rem;margin-bottom:10px;">📐</div>
+    <h2 style="font-family:'Baloo 2',cursive;font-size:1.5rem;color:#f9d030;margin-bottom:10px;" id="sqPromptTitle">Use the Set Square!</h2>
+    <p style="font-family:'Patrick Hand',cursive;font-size:1rem;color:#9aacb8;line-height:1.6;margin-bottom:20px;" id="sqPromptBody">Turn on the 📐 Set Square tool first, then position it against the base before drawing the height line.</p>
+    <button class="action-btn" onclick="enableSetSquareFromPrompt()" style="font-size:1rem;padding:10px 30px;">✅ Got it! I'll use the Set Square</button>
+  </div>
+</div>
+
+<!-- MODE SELECTION OVERLAY -->
+<div id="modeSelectOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(10px);z-index:800;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:linear-gradient(160deg,#0e2040,#091525);border:2.5px solid #f9d030;border-radius:32px;padding:36px 40px;max-width:520px;width:94%;text-align:center;box-shadow:0 0 60px rgba(249,208,48,.2),0 24px 80px rgba(0,0,0,.8);animation:popUp .45s cubic-bezier(.34,1.56,.64,1);">
+    <div style="font-size:3rem;margin-bottom:10px;">🔺</div>
+    <h2 style="font-family:'Baloo 2',cursive;font-size:2rem;color:#f9d030;margin-bottom:8px;">Height Hunter</h2>
+    <p style="font-family:'Patrick Hand',cursive;font-size:1.05rem;color:#9aacb8;margin-bottom:28px;line-height:1.6;">How would you like to play?</p>
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <!-- Guidance Mode -->
+      <button onclick="selectMode('guidance')" style="background:linear-gradient(135deg,#1a3a5c,#0e2040);border:2.5px solid #5bc8ff;border-radius:20px;padding:20px 24px;cursor:pointer;text-align:left;transition:all .2s;box-shadow:0 0 20px rgba(91,200,255,.1);"
+        onmouseover="this.style.boxShadow='0 0 30px rgba(91,200,255,.35)';this.style.borderColor='#8adcff';"
+        onmouseout="this.style.boxShadow='0 0 20px rgba(91,200,255,.1)';this.style.borderColor='#5bc8ff';">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span style="font-size:2.2rem;">🎯</span>
+          <div>
+            <div style="font-family:'Baloo 2',cursive;font-size:1.2rem;font-weight:800;color:#5bc8ff;margin-bottom:3px;">Guidance Mode</div>
+            <div style="font-family:'Patrick Hand',cursive;font-size:.95rem;color:#9aacb8;line-height:1.4;">Glowing dots show you exactly where to draw the height line. Great for learning!</div>
+          </div>
+        </div>
+      </button>
+      <!-- Challenge Mode -->
+      <button onclick="selectMode('challenge')" style="background:linear-gradient(135deg,#1a3a1a,#0e200e);border:2.5px solid #3de88a;border-radius:20px;padding:20px 24px;cursor:pointer;text-align:left;transition:all .2s;box-shadow:0 0 20px rgba(61,232,138,.1);"
+        onmouseover="this.style.boxShadow='0 0 30px rgba(61,232,138,.35)';this.style.borderColor='#6ef5a8';"
+        onmouseout="this.style.boxShadow='0 0 20px rgba(61,232,138,.1)';this.style.borderColor='#3de88a';">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span style="font-size:2.2rem;">🏆</span>
+          <div>
+            <div style="font-family:'Baloo 2',cursive;font-size:1.2rem;font-weight:800;color:#3de88a;margin-bottom:3px;">Challenge Mode</div>
+            <div style="font-family:'Patrick Hand',cursive;font-size:.95rem;color:#9aacb8;line-height:1.4;">No hints — find the height on your own. Put your knowledge to the test!</div>
+          </div>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- RESTART CONFIRM OVERLAY -->
+<div id="restartOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:400;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#0f1820;border:2.5px solid #ff6b6b;border-radius:20px;padding:28px 36px;text-align:center;max-width:360px;width:90%;">
+    <div style="font-size:2.5rem;margin-bottom:8px;">🔄</div>
+    <h3 style="font-family:'Baloo 2',cursive;color:#f4c842;margin-bottom:10px;">Restart Game?</h3>
+    <p style="font-family:'Patrick Hand',cursive;font-size:.92rem;color:#a09880;margin-bottom:18px;line-height:1.5;">All tickets, music buttons and progress will be reset. You can earn the Magic Piano again!</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="action-btn red" onclick="confirmRestart()">Yes, Restart</button>
+      <button class="action-btn" onclick="document.getElementById('restartOverlay').style.display='none'">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHATBOT OVERLAY -->
+<div id="chatbotOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:500;align-items:flex-end;justify-content:center;padding:12px;" onclick="if(event.target===this)closeChatbot()">
+  <div style="background:linear-gradient(180deg,#0e2040,#091525);border:2.5px solid #b07eff;border-radius:24px 24px 0 0;box-shadow:0 -8px 40px rgba(176,126,255,.2);max-width:560px;width:100%;max-height:80vh;display:flex;flex-direction:column;animation:popUp .3s cubic-bezier(.4,0,.2,1);">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1.5px solid #2e4060;flex-shrink:0;">
+      <span style="font-size:1.5rem;">🤖</span>
+      <div style="flex:1;">
+        <div style="font-family:'Baloo 2',cursive;font-weight:800;color:#c084fc;font-size:1rem;">Height Hunter Helper</div>
+        <div style="font-family:'Patrick Hand',cursive;font-size:.8rem;color:#a09880;">Ask me anything about the game!</div>
+      </div>
+      <button onclick="closeChatbot()" style="background:none;border:none;color:#a09880;font-size:1.4rem;cursor:pointer;">✕</button>
+    </div>
+    <!-- Messages -->
+    <div id="chatMessages" style="flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px;min-height:200px;"></div>
+    <!-- Input -->
+    <div style="padding:12px 16px;border-top:1.5px solid #2e4060;display:flex;gap:8px;flex-shrink:0;">
+      <input id="chatInput" type="text" placeholder="Ask a question…" maxlength="200"
+        style="flex:1;padding:10px 14px;border-radius:20px;border:1.5px solid #2e4060;background:linear-gradient(135deg,#0e2040,#111f35);color:#f0ece0;font-family:'Patrick Hand',cursive;font-size:1rem;outline:none;border-color:#1e3555;"
+        onkeydown="if(event.key==='Enter')sendChat()">
+      <button onclick="sendChat()" style="background:linear-gradient(135deg,#b07eff,#8050e0);border:none;border-radius:50%;box-shadow:0 4px 14px rgba(176,126,255,.5);width:42px;height:42px;font-size:1.2rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">➤</button>
+    </div>
+  </div>
+</div>
+
+<div id="celebOverlay" onclick="if(event.target===this)closeCeleb()">
+  <div class="celeb-box">
+    <div style="font-size:2.6rem;margin-bottom:4px;" id="celebEmoji">🎉</div>
+    <h2 id="celebTitle">Brilliant!</h2>
+    <p id="celebMsg">You found the height!</p>
+    <button class="action-btn" onclick="closeCeleb()">Keep Going 🚀</button>
+  </div>
+</div>
+
+<!-- MASTERY CELEBRATION MODAL -->
+<div id="masteryOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center;flex-direction:column;padding:20px;" onclick="if(event.target===this)closeMastery()">
+  <div id="masteryBox" style="background:linear-gradient(160deg,#0e2040,#091525);border:2.5px solid #f9d030;border-radius:28px;padding:28px 36px;text-align:center;max-width:480px;width:90%;max-height:88vh;overflow-y:auto;animation:popUp .45s cubic-bezier(.34,1.56,.64,1);position:relative;box-shadow:0 0 40px rgba(249,208,48,.25),0 24px 80px rgba(0,0,0,.7);">
+    <div style="font-size:3.8rem;margin-bottom:8px;" id="masteryEmoji">🎓</div>
+    <h2 style="font-family:'Baloo 2',cursive;font-size:1.9rem;color:#f4c842;margin-bottom:10px;" id="masteryTitle"></h2>
+    <p style="font-family:'Patrick Hand',cursive;font-size:1.15rem;color:#a09880;line-height:1.6;margin-bottom:14px;" id="masteryLevel"></p>
+    <div id="masteryRewardBox" style="background:linear-gradient(135deg,#0e2040,#091525);border:2px solid #1e3555;border-radius:16px;padding:16px 20px;margin-bottom:14px;">
+      <div style="font-size:2.2rem;margin-bottom:6px;" id="masteryMusicEmoji">🎵</div>
+      <p style="font-family:'Baloo 2',cursive;font-size:1.1rem;color:#f0ece0;font-weight:700;margin-bottom:6px;" id="masteryReward"></p>
+      <p style="font-family:'Patrick Hand',cursive;font-size:1rem;color:#a09880;line-height:1.5;" id="masteryRewardMsg"></p>
+      <div id="masteryPlayRow" style="display:none;margin-top:10px;">
+        <button id="masteryPlayBtn" onclick="playMasteryButton()" style="background:linear-gradient(135deg,#f9d030,#e8b800);border:none;border-radius:14px;padding:8px 24px;color:#1a1000;font-family:'Baloo 2',cursive;font-weight:800;font-size:.92rem;cursor:pointer;box-shadow:0 3px 10px rgba(249,208,48,.35);">▶ Play Music Button (1🎟️)</button>
+      </div>
+    </div>
+    <p style="font-family:'Patrick Hand',cursive;font-size:1.05rem;color:#60b4f0;margin-bottom:20px;font-style:italic;" id="masterySuggestion"></p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button class="action-btn" onclick="closeMastery()">Keep Going 🚀</button>
+      <button class="action-btn" style="background:#192333;color:#f4c842;border:2px solid #f4c842;" onclick="openCollection();closeMastery()">📚 Collection Book</button>
+    </div>
+  </div>
+</div>
+
+<!-- COLLECTION BOOK MODAL -->
+<div id="collectionOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)closeCollection()">
+  <div style="background:linear-gradient(160deg,#0e2040,#091525);border:2px solid #1e3555;border-radius:24px;padding:24px 28px;max-width:520px;width:90%;max-height:88vh;display:flex;flex-direction:column;animation:popUp .45s cubic-bezier(.34,1.56,.64,1);box-shadow:0 24px 80px rgba(0,0,0,.7);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-shrink:0;">
+      <h2 style="font-family:'Baloo 2',cursive;font-size:1.4rem;color:#f9d030;">📚 Collection Book</h2>
+      <button onclick="closeCollection()" style="background:none;border:none;color:#a09880;font-size:1.4rem;cursor:pointer;">✕</button>
+    </div>
+    <div id="collectionContent" style="display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding-right:4px;"></div>
+  </div>
+</div>
+
+<!-- NUDGE OVERLAY — prompts user to try a different triangle type -->
+<div id="nudgeOverlay" style="display:none;position:fixed;inset:0;background:#000e;z-index:320;align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)closeNudge()">
+  <div style="background:linear-gradient(160deg,#0e2040,#091525);border:2.5px solid #5bc8ff;border-radius:28px;padding:36px 40px;text-align:center;max-width:500px;width:90%;max-height:88vh;overflow-y:auto;animation:popUp .45s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 40px rgba(91,200,255,.2),0 24px 80px rgba(0,0,0,.7);">
+    <div style="font-size:3rem;margin-bottom:12px;" id="nudgeEmoji">🔵🟢🟣</div>
+    <h2 style="font-family:'Baloo 2',cursive;font-size:2.2rem;color:#5bc8ff;margin-bottom:16px;line-height:1.25;" id="nudgeTitle"></h2>
+    <p style="font-family:'Patrick Hand',cursive;font-size:1.15rem;color:#a09880;margin-bottom:24px;line-height:1.6;" id="nudgeBody"></p>
+    <button class="action-btn" onclick="closeNudge()">Got it! 🚀</button>
+  </div>
+</div>
+
+<!-- TUNE COMPLETE MODAL -->
+<div id="tuneCompleteOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:310;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)closeTuneComplete()">
+  <div style="background:linear-gradient(160deg,#0e2040,#091525);border:2.5px solid #3de88a;border-radius:28px;padding:28px 36px;text-align:center;max-width:500px;width:90%;max-height:88vh;overflow-y:auto;animation:popUp .45s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 40px rgba(61,232,138,.2),0 24px 80px rgba(0,0,0,.7);">
+    <div style="font-size:3.5rem;margin-bottom:8px;">🎹🌟</div>
+    <h2 style="font-family:'Baloo 2',cursive;font-size:2.4rem;color:#3de88a;margin-bottom:10px;line-height:1.2;" id="tuneCompleteTitle">Congratulations!</h2>
+    <p style="font-family:'Baloo 2',cursive;font-size:1.5rem;font-weight:800;color:#f4c842;margin-bottom:14px;" id="tuneCompleteSubtitle"></p>
+    <p style="font-family:'Patrick Hand',cursive;font-size:1.15rem;color:#a09880;margin-bottom:20px;line-height:1.5;" id="tuneCompleteNext"></p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <button class="action-btn" onclick="closeTuneComplete()">Keep Going 🚀</button>
+      <button class="action-btn" style="background:#192333;color:#5ed08a;border:2px solid #5ed08a;" onclick="openCollection();closeTuneComplete()">📚 Collection Book</button>
+      <button class="action-btn red" onclick="restartGame()">🔄 Restart Game</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXTEND BASE PROMPT OVERLAY -->
+<div id="extendPromptOverlay" style="display:none;position:fixed;inset:0;background:#000e;z-index:310;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:linear-gradient(160deg,#0e2040,#091525);border:2.5px solid #f9d030;border-radius:28px;padding:36px 40px;text-align:center;max-width:500px;width:90%;max-height:88vh;overflow-y:auto;animation:popUp .45s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 40px rgba(249,208,48,.25),0 24px 80px rgba(0,0,0,.7);">
+    <div style="font-size:3.5rem;margin-bottom:12px;">⟵⟶</div>
+    <h2 style="font-family:'Baloo 2',cursive;font-size:2.2rem;color:#f4c842;margin-bottom:16px;line-height:1.2;">USE THE EXTEND BASE FUNCTION TO GET THE MAGIC PIANO</h2>
+    <p style="font-family:'Patrick Hand',cursive;font-size:1.15rem;color:#a09880;margin-bottom:20px;line-height:1.6;">
+      An obtuse triangle has been loaded. 
+      Pick a base whose height falls <strong style="color:#f4c842;">outside the triangle</strong>, 
+      turn on <strong style="color:#f4c842;">⟵⟶ Extend Base</strong> to see the full base line, 
+      then draw the correct height with one end touching the extended base line.
+      The Magic Piano will unlock!
+    </p>
+    <button class="action-btn" onclick="document.getElementById('extendPromptOverlay').style.display='none'">Let's do it! 🎯</button>
+  </div>
+</div>
+
+
+<!-- MUSIC PLAYER PANEL -->
+<audio id="gameAudio" preload="none" playsinline></audio>
+<div id="musicPlayerPanel" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,#0e2040,#091525);border:2px solid #f9d030;border-radius:18px;padding:14px 22px;box-shadow:0 0 24px rgba(249,208,48,.3),0 8px 32px rgba(0,0,0,.6);
+  z-index:400;align-items:center;gap:14px;box-shadow:0 8px 32px #000a;min-width:260px;">
+  <div style="font-size:1.6rem;">🎵</div>
+  <div id="musicPlayerLabel" style="font-family:'Baloo 2',cursive;font-size:.9rem;color:#f4c842;font-weight:700;flex:1;"></div>
+  <button onclick="hideMusicPanel()" style="background:none;border:none;color:#a09880;font-size:1.3rem;cursor:pointer;">✕</button>
+</div>
+
+<!-- INSTRUCTION OVERLAY -->
+<div id="instrOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:450;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:linear-gradient(160deg,#0e2040,#091525);border-radius:28px;padding:32px 36px;max-width:540px;width:92%;max-height:88vh;overflow-y:auto;animation:popUp .45s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 50px rgba(249,208,48,.2),0 24px 80px rgba(0,0,0,.7);" id="instrBox">
+    <div style="font-size:3rem;text-align:center;margin-bottom:10px;" id="instrEmoji">📐</div>
+    <h2 style="font-family:'Baloo 2',cursive;font-size:1.8rem;text-align:center;margin-bottom:6px;" id="instrTitle">Instructions</h2>
+    <div style="font-family:'Patrick Hand',cursive;font-size:1.05rem;color:#9aacb8;line-height:1.7;margin-bottom:8px;" id="instrBody"></div>
+    <div style="background:rgba(249,208,48,.08);border:1.5px solid rgba(249,208,48,.3);border-radius:14px;padding:12px 16px;margin-bottom:20px;font-family:'Patrick Hand',cursive;font-size:.95rem;color:#f9d030;line-height:1.6;" id="instrGoal"></div>
+    <div style="text-align:center;">
+      <button class="action-btn" style="font-size:1.1rem;padding:10px 36px;" onclick="closeInstructions()">OK, Let's Go! 🚀</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- WIN LIMIT OVERLAY -->
+<div id="winLimitOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);backdrop-filter:blur(10px);z-index:10002;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:linear-gradient(160deg,#0e2040,#091525);border:2.5px solid #f9d030;border-radius:28px;padding:36px 40px;max-width:480px;width:92%;text-align:center;box-shadow:0 0 50px rgba(249,208,48,.25),0 24px 80px rgba(0,0,0,.8);animation:popUp .45s cubic-bezier(.34,1.56,.64,1);">
+    <div style="font-size:3rem;margin-bottom:12px;">🔒</div>
+    <h2 style="font-family:'Baloo 2',cursive;font-size:1.7rem;color:#f9d030;margin-bottom:10px;">Session Limit Reached</h2>
+    <p style="font-family:'Patrick Hand',cursive;font-size:1rem;color:#9aacb8;margin-bottom:20px;line-height:1.6;">You have completed <strong style="color:#f9d030;">7 questions</strong> in this session! Ask your teacher or admin for the password to keep playing.</p>
+    <input id="winLimitPwInput" type="password" placeholder="Admin password"
+      style="width:100%;padding:10px 14px;border-radius:12px;border:1.5px solid #1e3555;
+      background:#0a1524;color:#f0ece0;font-family:'Patrick Hand',cursive;font-size:1rem;
+      outline:none;margin-bottom:8px;text-align:center;letter-spacing:3px;"
+      onkeydown="if(event.key==='Enter')checkWinLimitPassword()">
+    <div id="winLimitPwError" style="display:none;color:#ff5f7a;font-family:'Patrick Hand',cursive;font-size:.88rem;margin-bottom:8px;">❌ Incorrect password. Try again.</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:12px;">
+      <button onclick="checkWinLimitPassword()" style="background:linear-gradient(135deg,#f9d030,#e8b800);border:none;border-radius:14px;padding:10px 28px;color:#1a1000;font-family:'Baloo 2',cursive;font-weight:800;font-size:.95rem;cursor:pointer;">Enter ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  CANVAS
+// ══════════════════════════════════════════════════════════════
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+let W=800,H=500;
+
+// ══════════════════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════════════════
+let showGrid=false,showSetSq=false,showExtension=false,showGuidance=false;
+let setSquareRequired=false; // must enable set square before drawing
+let sqPlaced=false; // set square has been snapped into correct position
+let guideAnim=0, guideAnimFrame=null;
+let moveMode=false,rotMode=false,scaleMode=false;
+let attempts=0,stars=0,streakCnt=0,level=1;
+let winCount=0; // count of correct answers; locked after 7
+let solved=false;
+
+// ── Phase ──
+// 'base'  : waiting for student to click a base side
+// 'height': base chosen, student draws/adjusts height line
+let phase='base';
+let selectedBase=null;  // {i,j} indices into tri.pts (world edge i→j)
+let hoverBase=null;     // edge index being hovered, or null
+
+// Triangle
+let tri={pts:[],cx:0,cy:0,angle:0,typeIdx:0};
+
+// Height line (world coords)
+let hl=null;  // {x1,y1,x2,y2} or null
+
+// Line interaction
+// 'none'|'drawing'|'drag-p1'|'drag-p2'|'drag-body'
+let lineAct='none';
+let drawStart=null;
+let bodyOff={x:0,y:0};
+const HNDL=13;  // handle hit radius px
+
+// Snap
+let snapEdge=null;
+
+// Triangle move/rotate
+let triDrag=false,triDragOff={x:0,y:0};
+let triRot=false,triRotSt={angle:0,ma:0};
+
+// Vertex scale drag
+let vtxScale=false;   // dragging a vertex to scale
+let vtxScaleIdx=-1;   // which vertex (0,1,2)
+let vtxScaleDist=1;   // original distance from centroid to that vertex (world px)
+let vtxScalePts=[];   // snapshot of pts at drag start (for clean scaling)
+
+// ══════════════════════════════════════════════════════════════
+//  TRIANGLE GENERATION  (procedural, by category)
+// ══════════════════════════════════════════════════════════════
+// Selected category: 'right' | 'acute' | 'obtuse'
+let selectedCat = 'right';
+
+function rand(min,max){ return min+Math.random()*(max-min); }
+
+// Returns pts array [[x1,y1],[x2,y2],[x3,y3]] centred near origin.
+// All triangles are sized so largest dimension ~160–220px.
+
+function genRight(){
+  // 90° angle at vertex A (left). Legs along x-axis and y-axis from A.
+  // leg1 = horizontal (base), leg2 = vertical (height from A)
+  const leg1=rand(180,280); // horizontal leg
+  const leg2=rand(150,260); // vertical leg
+  // A at origin, B at (leg1,0), C at (0,-leg2)
+  // Centre the triangle
+  const cx=(leg1+0+0)/3, cy=(0+0-leg2)/3;
+  return [
+    [-cx,       -cy      ],  // A: right-angle vertex
+    [leg1-cx,   -cy      ],  // B
+    [-cx,       -leg2-cy ],  // C
+  ];
+}
+
+function genAcute(){
+  // All angles < 90°. Use angle parameterisation:
+  // Place base along x-axis centred, apex above.
+  // Choose angles A,B at base both in (40°,80°) so C = 180-A-B is also acute.
+  let angA, angB, angC;
+  do {
+    angA = rand(40,80) * Math.PI/180;
+    angB = rand(40,80) * Math.PI/180;
+    angC = Math.PI - angA - angB;
+  } while(angC <= 0.35 || angC >= Math.PI/2); // C also acute, not too small
+
+  const base = rand(220,320);
+  // Law of sines: base/sin(C) = b/sin(B) = a/sin(A)
+  const scale = base / Math.sin(angC);
+  const hx = base * Math.cos(angA); // apex x from left vertex
+  const hy = base * Math.sin(angA); // apex height (positive = up)
+
+  // Vertices: left=(0,0), right=(base,0), apex=(hx,-hy)
+  const cx=(0+base+hx)/3, cy=(0+0-hy)/3;
+  return [
+    [-cx,      -cy   ],
+    [base-cx,  -cy   ],
+    [hx-cx,    -hy-cy],
+  ];
+}
+
+function genObtuse(){
+  // Generate a scalene obtuse triangle with the obtuse angle (>110°) at a random vertex.
+  // All three angles are different → all three sides are different lengths.
+  let angA, angB, angC;
+  do {
+    // Force angA and angB to be clearly different so all sides differ
+    angA = rand(10, 30) * Math.PI / 180;
+    angB = rand(15, 38) * Math.PI / 180;
+    // Reject if too similar (would make near-isoceles) or if angC not obtuse enough
+    angC = Math.PI - angA - angB;
+  } while (
+    angC <= 110 * Math.PI / 180 ||
+    angC >= 158 * Math.PI / 180 ||
+    Math.abs(angA - angB) < 8 * Math.PI / 180
+  );
+
+  // Build the triangle with A at (0,0), B at (base,0), obtuse angle at C.
+  // All three sides will be different because angA ≠ angB ≠ angC.
+  const base = rand(220, 320);
+  // Law of sines: side opposite angC = base, so:
+  // AC (opposite angB) = base * sin(angB)/sin(angC)
+  const AC = base * Math.sin(angB) / Math.sin(angC);
+  const Cx = AC * Math.cos(angA);
+  const Cy = AC * Math.sin(angA); // positive = above base
+
+  // Centre
+  const centX = (0 + base + Cx) / 3;
+  const centY = (0 + 0 + Cy) / 3;
+
+  // Build centred pts with obtuse angle at index 2 (C), then shuffle vertex order
+  let pts = [
+    [0 - centX,    -(0 - centY)   ],  // A — angle angA
+    [base - centX, -(0 - centY)   ],  // B — angle angB
+    [Cx - centX,   -(Cy - centY)  ],  // C — obtuse angle angC
+  ];
+
+  // Randomly rotate which vertex index holds the obtuse angle (0, 1, or 2)
+  const shift = Math.floor(Math.random() * 3);
+  const rotated = [];
+  for (let i = 0; i < 3; i++) rotated.push(pts[(i + shift) % 3]);
+  pts = rotated;
+
+  // Scale up if the triangle is too small relative to the arc indicator (R≈40px min edge)
+  const minEdge = Math.min(
+    Math.hypot(pts[0][0]-pts[1][0],pts[0][1]-pts[1][1]),
+    Math.hypot(pts[1][0]-pts[2][0],pts[1][1]-pts[2][1]),
+    Math.hypot(pts[2][0]-pts[0][0],pts[2][1]-pts[0][1])
+  );
+  // Ensure minimum edge > 120px so arc (at 25% of shortest adjacent edge) is at least 30px
+  const minAllowed = 120;
+  if (minEdge < minAllowed) {
+    const scale = minAllowed / minEdge;
+    pts = pts.map(([x,y]) => [x*scale, y*scale]);
+  }
+
+  return pts;
+}
+
+// Compute actual angles of the triangle (in local coords) — returns degrees per vertex
+function triAngles(pts){
+  function angle(a,b,c){
+    // angle at vertex b
+    const ax=a[0]-b[0],ay=a[1]-b[1];
+    const cx=c[0]-b[0],cy=c[1]-b[1];
+    const dot=ax*cx+ay*cy;
+    const cross=ax*cy-ay*cx;
+    return Math.atan2(Math.abs(cross),dot)*180/Math.PI;
+  }
+  return [
+    angle(pts[2],pts[0],pts[1]),
+    angle(pts[0],pts[1],pts[2]),
+    angle(pts[1],pts[2],pts[0]),
+  ];
+}
+
+// Index of the obtuse vertex (angle > 90°), or -1
+function obtuseVertexIdx(pts){
+  const angles=triAngles(pts);
+  for(let i=0;i<3;i++) if(angles[i]>90) return i;
+  return -1;
+}
+
+function generateTriPts(cat){
+  if(cat==='right')  return genRight();
+  if(cat==='acute')  return genAcute();
+  return genObtuse();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SET SQUARE  (45-45-90 acrylic)
+// ══════════════════════════════════════════════════════════════
+const SQ_LEG_DEFAULT=190;
+let sq={cx:400,cy:300,angle:0,leg:SQ_LEG_DEFAULT,drag:false,rot:false,
+        sqScale:false,dOff:{x:0,y:0},rSt:{a:0,ma:0}};
+
+function sqL2W(lx,ly){
+  const c=Math.cos(sq.angle),s=Math.sin(sq.angle);
+  return [sq.cx+lx*c-ly*s,sq.cy+lx*s+ly*c];
+}
+function sqWC(){return [[0,0],[sq.leg,0],[0,-sq.leg]].map(([lx,ly])=>sqL2W(lx,ly));}
+function sqEdges(){
+  const wc=sqWC();
+  return [[0,1],[0,2],[1,2]].map(([i,j])=>{
+    const ax=wc[i][0],ay=wc[i][1],bx=wc[j][0],by=wc[j][1];
+    const len=Math.hypot(bx-ax,by-ay);
+    return {ax,ay,bx,by,len,nx:(bx-ax)/len,ny:(by-ay)/len};
+  });
+}
+function ptSeg(px,py,ax,ay,bx,by){
+  const dx=bx-ax,dy=by-ay,ls=dx*dx+dy*dy;
+  const t=ls===0?0:Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/ls));
+  return {dist:Math.hypot(px-ax-t*dx,py-ay-t*dy),t,fx:ax+t*dx,fy:ay+t*dy};
+}
+const SNAP_D=20;
+function closestSqEdge(px,py){
+  if(!showSetSq) return null;
+  let best=null,bd=SNAP_D;
+  const edges=sqEdges();
+  // Exclude edge[2] = hypotenuse (index 1,2 → edges[2]) from snapping
+  for(let ei=0;ei<2;ei++){const e=edges[ei];const r=ptSeg(px,py,e.ax,e.ay,e.bx,e.by);if(r.dist<bd){bd=r.dist;best=e;}}
+  return best;
+}
+function projEdge(px,py,e){const t=(px-e.ax)*e.nx+(py-e.ay)*e.ny;return {x:e.ax+t*e.nx,y:e.ay+t*e.ny};}
+function snapPt(px,py){
+  // First: snap to target height endpoints (apex and foot) within 20px
+  if(selectedBase && phase==='height'){
+    let h2;
+    try{ h2=computeHeight(selectedBase.i,selectedBase.j); }catch(e2){}
+    if(h2){
+      const dApex=Math.hypot(px-h2.apex[0],py-h2.apex[1]);
+      const dFoot=Math.hypot(px-h2.foot[0],py-h2.foot[1]);
+      if(dApex<=20){ snapEdge=null; return{x:h2.apex[0],y:h2.apex[1],snapped:true}; }
+      if(dFoot<=20){ snapEdge=null; return{x:h2.foot[0],y:h2.foot[1],snapped:true}; }
+    }
+  }
+  // Then: snap to set square edges
+  const e=closestSqEdge(px,py);
+  if(e){snapEdge=e;const p=projEdge(px,py,e);return{x:p.x,y:p.y,snapped:true};}
+  snapEdge=null;return{x:px,y:py,snapped:false};
+}
+function ptInSq(px,py){
+  const wc=sqWC();
+  function cross(ax,ay,bx,by,cx,cy){return(ax-cx)*(by-cy)-(bx-cx)*(ay-cy);}
+  const d1=cross(px,py,...wc[0],...wc[1]),d2=cross(px,py,...wc[1],...wc[2]),d3=cross(px,py,...wc[2],...wc[0]);
+  return !((d1<0||d2<0||d3<0)&&(d1>0||d2>0||d3>0));
+}
+function nearSqRot(px,py){
+  const wc=sqWC();const mx=(wc[1][0]+wc[2][0])/2,my=(wc[1][1]+wc[2][1])/2;
+  return Math.hypot(px-mx,py-my)<26;
+}
+// Returns 1 (h-leg end), 2 (v-leg end) or -1 (none) — for resize handles
+const SQ_HNDL=16;
+function hitSqResizeHandle(px,py){
+  const wc=sqWC();
+  if(Math.hypot(px-wc[1][0],py-wc[1][1])<=SQ_HNDL) return 1; // horiz leg end
+  if(Math.hypot(px-wc[2][0],py-wc[2][1])<=SQ_HNDL) return 2; // vert leg end
+  return -1;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TRIANGLE COORD HELPERS
+// ══════════════════════════════════════════════════════════════
+function l2c(lx,ly){
+  const c=Math.cos(tri.angle),s=Math.sin(tri.angle);
+  return [tri.cx+lx*c-ly*s,tri.cy+lx*s+ly*c];
+}
+function getWP(){return tri.pts.map(p=>l2c(p[0],p[1]));}
+
+function ptInTri(px,py){
+  const wp=getWP();
+  function cross(ax,ay,bx,by,cx,cy){return(ax-cx)*(by-cy)-(bx-cx)*(ay-cy);}
+  const d1=cross(px,py,...wp[0],...wp[1]),d2=cross(px,py,...wp[1],...wp[2]),d3=cross(px,py,...wp[2],...wp[0]);
+  return !((d1<0||d2<0||d3<0)&&(d1>0||d2>0||d3>0));
+}
+
+// Distance from (px,py) to the infinite line through segment, signed
+function ptLineDist(px,py,ax,ay,bx,by){
+  const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy);
+  if(len<0.001) return Math.hypot(px-ax,py-ay);
+  return Math.abs((px-ax)*dy-(py-ay)*dx)/len;
+}
+
+// Distance from point to finite segment
+function ptSegDist(px,py,ax,ay,bx,by){return ptSeg(px,py,ax,ay,bx,by).dist;}
+
+// ── Edge hover detection ──
+// Returns edge index {i, j, dist} for the closest edge within threshold, or null
+const EDGE_HIT=16;
+function hoveredEdge(px,py){
+  const wp=getWP();
+  let best=null,bd=EDGE_HIT;
+  for(let i=0;i<3;i++){
+    const j=(i+1)%3;
+    const d=ptSegDist(px,py,...wp[i],...wp[j]);
+    if(d<bd){bd=d;best={i,j,dist:d};}
+  }
+  return best;
+}
+
+// Hit-test world vertices for scale handles
+const VTX_HIT=14;
+function hitVertex(px,py){
+  const wp=getWP();
+  for(let i=0;i<3;i++){
+    if(Math.hypot(px-wp[i][0],py-wp[i][1])<=VTX_HIT) return i;
+  }
+  return -1;
+}
+//  Returns {apex[world], foot[world], height(world px)}
+// ══════════════════════════════════════════════════════════════
+function computeHeight(baseI,baseJ){
+  const wp=getWP();
+  const k=(baseI+2)%3; // the opposite vertex
+  const [ax,ay]=wp[baseI],[bx,by]=wp[baseJ],[cx,cy]=wp[k];
+  const bdx=bx-ax,bdy=by-ay,bl2=bdx*bdx+bdy*bdy;
+  const t=((cx-ax)*bdx+(cy-ay)*bdy)/bl2;
+  const fx=ax+t*bdx,fy=ay+t*bdy; // foot of perpendicular
+  const h=Math.hypot(cx-fx,cy-fy);
+  // perpendicular unit vector (base normal)
+  const blen=Math.sqrt(bl2);
+  // the height direction unit vector
+  const hn_x=(cx-fx)/h||0,hn_y=(cy-fy)/h||0;
+  return {apex:[cx,cy],foot:[fx,fy],height:h,
+          baseDir:{nx:bdx/blen,ny:bdy/blen},
+          heightDir:{nx:hn_x,ny:hn_y}};
+}
+
+// Returns true if the foot of the perpendicular from the selected base lies OUTSIDE the segment
+function footOutsideBase(){
+  if(!selectedBase) return false;
+  const {foot}=computeHeight(selectedBase.i,selectedBase.j);
+  const wp=getWP();
+  const ax=wp[selectedBase.i][0],ay=wp[selectedBase.i][1];
+  const bx=wp[selectedBase.j][0],by=wp[selectedBase.j][1];
+  const bdx=bx-ax,bdy=by-ay,bl2=bdx*bdx+bdy*bdy;
+  if(bl2<0.001) return false;
+  // t = projection parameter; 0..1 means inside segment
+  const t=((foot[0]-ax)*bdx+(foot[1]-ay)*bdy)/bl2;
+  return t<-0.01 || t>1.01;
+}
+
+// Is the game currently in the "must use extend base to earn magic piano" challenge?
+// Now: the 7th task (obtuse extend) IS the magic piano task - no separate challenge needed.
+function inExtendChallenge(){ return false; }
+
+const LEN_TOL=15;
+const PERP_TOL=0.00175;
+
+function checkAnswer(){
+  if(!hl){setFb('Draw a line first!','fb-try');return;}
+  if(solved) return;
+  if(!selectedBase){setFb('Pick a base side first!','fb-try');return;}
+
+  attempts++;
+  document.getElementById('attCount').textContent=attempts;
+
+  const {x1,y1,x2,y2}=hl;
+  const lineLen=Math.hypot(x2-x1,y2-y1);
+  if(lineLen<5){setFb('Your line is too short!','fb-try');return;}
+
+  const {height,baseDir,heightDir,foot}=computeHeight(selectedBase.i,selectedBase.j);
+
+  // 1. Perpendicularity: line direction should match heightDir
+  const ldx=(x2-x1)/lineLen,ldy=(y2-y1)/lineLen;
+  const dotBase=Math.abs(ldx*baseDir.nx+ldy*baseDir.ny); // 0 = perp, 1 = parallel
+  const isPerp=dotBase<=PERP_TOL;
+
+  // 2. Length match
+  const lenDiff=lineLen-height; // positive = too long
+  const isLenOk=Math.abs(lenDiff)<=LEN_TOL;
+
+  // 3. One endpoint must touch the base line (or its extension) — i.e. lie close to
+  //    the infinite line through the base. We measure perpendicular distance from each
+  //    endpoint to the infinite base line and require at least one to be within LEN_TOL.
+  function distToBaseLine(px,py){
+    // distance from point to infinite line through wp[i]→wp[j]
+    const wp=getWP();
+    const ax=wp[selectedBase.i][0],ay=wp[selectedBase.i][1];
+    const bx=wp[selectedBase.j][0],by=wp[selectedBase.j][1];
+    const len=Math.hypot(bx-ax,by-ay)||1;
+    return Math.abs((px-ax)*(by-ay)-(py-ay)*(bx-ax))/len;
+  }
+  const d1Base=distToBaseLine(x1,y1);
+  const d2Base=distToBaseLine(x2,y2);
+  const touchesBase=Math.min(d1Base,d2Base)<=LEN_TOL;
+
+  if(isPerp && isLenOk && touchesBase){
+    // ✅ Correct!
+    solved=true;
+    stars+=Math.max(1,4-attempts);
+    streakCnt++;
+    document.getElementById('starCount').textContent=stars;
+    document.getElementById('streak').textContent=streakCnt;
+    document.getElementById('nextBtn').style.display='';
+    document.getElementById('checkBtn').style.display='none';
+
+    // Check win limit — block if 7 answers reached
+    if(checkWinLimit()) return;
+
+    // Check if this is the obtuse extend task (7th task)
+    const curDef=nextRequiredDef();
+    const isExtendTask=(curDef && curDef.baseSlot==='extend' && selectedCat==='obtuse');
+
+    if(isExtendTask){
+      // Must use extend base AND foot must be outside base segment
+      const needsExt=footOutsideBase();
+      const usedExt=showExtension;
+      if(needsExt && usedExt){
+        setFb('✅ Correct! The height touches the base extension — 🎹 Magic Piano earned!','fb-good');
+        if(selectedBase) solvedBasesThisTri.push({i:selectedBase.i,j:selectedBase.j});
+        setTimeout(()=>checkMastery(selectedCat),400);
+      } else if(!needsExt){
+        solved=false;
+        document.getElementById('nextBtn').style.display='none';
+        document.getElementById('checkBtn').style.display='';
+        setFb('🤔 Good height! But pick a base whose height falls OUTSIDE the triangle.','fb-try');
+      } else {
+        solved=false;
+        document.getElementById('nextBtn').style.display='none';
+        document.getElementById('checkBtn').style.display='';
+        setFb('🤔 Correct height! But turn on ⟵⟶ Extend Base first.','fb-try');
+      }
+    } else {
+      // Normal correct answer
+      if(selectedBase) solvedBasesThisTri.push({i:selectedBase.i,j:selectedBase.j});
+      setTimeout(()=>checkMastery(selectedCat),400);
+      setFb('✅ Correct! Great work!','fb-good');
+    }
+  } else {
+    streakCnt=0;
+    document.getElementById('streak').textContent=0;
+    buildHint(isPerp,isLenOk,touchesBase,lenDiff);
+  }
+  render();
+}
+
+function buildHint(isPerp,isLenOk,touchesBase,lenDiff){
+  let fb='',hint='';
+
+  if(!touchesBase){
+    fb='🤔 Your line is not touching the base.';
+    hint='Make sure one end of your line sits on the base (or its extension). Try the <strong>Extend Base</strong> button to see the full base line.';
+  } else if(!isPerp && !isLenOk){
+    const lenWord=lenDiff>0?'too long':'too short';
+    fb=`🤔 Your height line is ${lenWord} and the direction needs adjusting too.`;
+    hint='Try using the <strong>Set Square</strong> — line one edge along the base, then draw your height line along the other edge.';
+  } else if(!isPerp){
+    fb='🤔 The length looks close! But the direction of your line needs adjusting.';
+    hint='Try using the <strong>Set Square</strong> — line one edge along the base, then draw your height line along the other edge.';
+  } else if(!isLenOk){
+    if(lenDiff>LEN_TOL){
+      fb='🤔 Good direction! But your height line is <strong>too long</strong> — make it shorter.';
+      hint='Drag an endpoint of your line to make it <strong>shorter</strong>.';
+    } else {
+      fb='🤔 Good direction! But your height line is <strong>too short</strong> — make it longer.';
+      hint='Drag an endpoint of your line to make it <strong>longer</strong>.';
+    }
+  }
+  setFb(fb,'fb-try');
+  document.getElementById('hintBox').innerHTML=hint;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GAME FLOW
+// ══════════════════════════════════════════════════════════════
+function selectBase(i,j){
+  // Check if this side was already solved on this triangle
+  const alreadySolved = solvedBasesThisTri.some(b=>
+    (b.i===i&&b.j===j)||(b.i===j&&b.j===i)
+  );
+  if(alreadySolved){
+    const edgeNames=['AB','BC','CA'];
+    // Find which sides have NOT been solved yet (excluding the one just clicked)
+    const allEdges=[{i:0,j:1},{i:1,j:2},{i:2,j:0}];
+    const remaining=allEdges.filter(e=>
+      !solvedBasesThisTri.some(b=>(b.i===e.i&&b.j===e.j)||(b.i===e.j&&b.j===e.i))
+      && !(e.i===i&&e.j===j) && !(e.i===j&&e.j===i)
+    );
+    const clickedName=edgeNames[i];
+    const remainingNames=remaining.map(e=>edgeNames[e.i]);
+    const options=remainingNames.length>0
+      ? 'Try side '+(remainingNames.length===1?remainingNames[0]:remainingNames.slice(0,-1).join(', ')+' or '+remainingNames[remainingNames.length-1])+'.'
+      : 'All other sides are done — press Next ▶.';
+    setFb(`⚠️ Side ${clickedName} already done! ${options}`,'fb-warn');
+    render();
+    return;
+  }
+  selectedBase={i,j};
+  phase='height';
+
+  // ── Obtuse extend task: reject sides where foot is inside the triangle ──
+  const curDef=nextRequiredDef();
+  const isExtendTask=(curDef && curDef.baseSlot==='extend' && selectedCat==='obtuse');
+  if(isExtendTask && !footOutsideBase()){
+    // Find which sides DO have the foot outside (valid choices)
+    const edgeNames=['AB','BC','CA'];
+    const allEdges=[{i:0,j:1},{i:1,j:2},{i:2,j:0}];
+    const validSides=allEdges.filter(e=>{
+      const tmpBase=selectedBase;
+      selectedBase=e;
+      const outside=footOutsideBase();
+      selectedBase=tmpBase;
+      return outside;
+    });
+    const clickedName=edgeNames[i];
+    const validNames=validSides.map(e=>edgeNames[e.i]);
+    const suggestion=validNames.length>0
+      ? 'Try side '+(validNames.length===1?validNames[0]:validNames.slice(0,-1).join(', ')+' or '+validNames[validNames.length-1])+'.'
+      : 'Rotate the triangle to find the right side.';
+    setFb(`⚠️ Side ${clickedName}: height lands inside — pick a side where it falls outside! ${suggestion}`,'fb-warn');
+    // Reset — don't accept this selection
+    selectedBase=null;
+    phase='base';
+    document.getElementById('step1badge').style.opacity='1';
+    document.getElementById('step2badge').style.opacity='0.35';
+    document.getElementById('checkBtn').style.display='none';
+    document.getElementById('phaseLabel').textContent='Phase 1 — Pick a Base';
+    render();
+    return;
+  }
+  sqPlaced=false;  // always reset — student must re-place the set square for the new base
+  document.getElementById('step1badge').style.opacity='0.45';
+  document.getElementById('step2badge').style.opacity='1';
+  document.getElementById('checkBtn').style.display='';
+  document.getElementById('phaseLabel').textContent='Phase 2 — Draw the Height';
+  hl=null;
+
+  // For obtuse extend task: prompt user to enable Extend Base themselves first
+  const curDefSB=nextRequiredDef();
+  const isExtendTaskSB=(curDefSB && curDefSB.baseSlot==='extend' && selectedCat==='obtuse');
+  if(isExtendTaskSB){
+    // Don't auto-enable extension — user must press the button themselves
+    showSetSq=false;
+    document.getElementById('setsqBtn').classList.remove('on');
+    setFb('⟵⟶ Press the Extend Base button first to see the full base line!','fb-warn');
+    showHintBanner1('Then place the Set Square and draw the height to the extended base');
+    render();
+    return;
+  }
+
+  if(showGuidance && footOutsideBase()){
+    showExtension=true;
+    document.getElementById('extBtn').classList.add('on');
+  }
+  if(gameMode==='guidance'){
+    setSquareRequired=false;
+    showSetSq=true;
+    document.getElementById('setsqBtn').classList.add('on');
+    sq.cx=Math.min(W-80,W*0.72);sq.cy=H*0.50;sq.angle=0;sq.leg=SQ_LEG_DEFAULT;
+    setFb('📐 Drag the Set Square corner to the ② green dot — it will snap!','fb-info');
+    showHintBanner1('Then draw from ① gold dot to ② green dot');
+  } else {
+    setSquareRequired=false;
+    showSetSq=true;
+    document.getElementById('setsqBtn').classList.add('on');
+    sq.cx=Math.min(W-80, W*0.15); sq.cy=H*0.50; sq.angle=0; sq.leg=SQ_LEG_DEFAULT;
+    setFb('📐 Drag the Set Square corner to the base foot — it will snap. Then draw the height.','fb-warn');
+    showHintBanner1('One end of height line must touch the base');
+  }
+  render();
+}
+
+function showSqPrompt(){
+  // Challenge mode only
+  document.getElementById('sqPromptTitle').textContent='📐 Use the Set Square!';
+  document.getElementById('sqPromptBody').innerHTML=
+    'Remember to use the 📐 <strong>Set Square</strong> tool! Turn it on in the toolbar, align one edge with the base, then draw the height line along the other edge at <strong>90°</strong>.';
+  document.getElementById('sqPromptOverlay').style.display='flex';
+}
+
+function enableSetSquareFromPrompt(){
+  // Challenge mode only — user clicks "OK, I'll use it"
+  document.getElementById('sqPromptOverlay').style.display='none';
+  setSquareRequired=false;
+  // Don't auto-turn-on — let user place it themselves
+  setFb('📐 Good! Turn on the Set Square in the toolbar, place it on the base, then draw the height.','fb-info');
+  document.getElementById('hintBox').innerHTML='Turn on 📐 <strong>Set Square</strong> in the toolbar. Align one edge with the base, then draw the height line at 90°.';
+  render();
+}
+
+
+// Returns true when the set square's right-angle corner is at the foot
+// and its arms align with the guide triangle edges (base and height directions).
+function isSqPlacedCorrectly(){
+  if(!showSetSq || !selectedBase) return false;
+  const g=_getGuideVectors();
+  if(!g) return false;
+
+  const TOL=10;
+  // Corner must be at foot
+  if(Math.hypot(sq.cx-g.foot[0], sq.cy-g.foot[1]) > TOL) return false;
+
+  // Check all 4 quarter-turn candidates — any orientation where both arms
+  // align with base and height directions (either leg can be along either direction)
+  const base=Math.atan2(g.by, g.bx);
+  for(const k of [0, Math.PI/2, Math.PI, 3*Math.PI/2]){
+    const a=base+k;
+    const posX_x=Math.cos(a), posX_y=Math.sin(a);
+    const negY_x=Math.sin(a), negY_y=-Math.cos(a);
+    const scoreX=(posX_x*g.bx+posX_y*g.by);
+    const scoreY=(negY_x*g.hx+negY_y*g.hy);
+    // Within ~10° of correct alignment
+    if(scoreX>0.98 && scoreY>0.98){
+      // Also check actual sq angle matches
+      const da=((sq.angle-a)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+      if(da<0.2 || da>Math.PI*2-0.2) return true;
+    }
+  }
+  return false;
+}
+
+
+// Returns true when sq corner is within 30px of the foot — triggers auto-snap
+function sqHas80Overlap(){
+  if(!showSetSq || !selectedBase) return false;
+  const g=_getGuideVectors();
+  if(!g) return false;
+  return Math.hypot(sq.cx-g.foot[0], sq.cy-g.foot[1]) < 30;
+}
+
+// Snap set square onto the foot so its right-angle corner sits exactly at the foot,
+// horizontal leg along the base direction, vertical leg along the height direction.
+// Uses the same vectors as the yellow guide triangle (p0→p1 = base, p0→p2 = height).
+function _getGuideVectors(){
+  // Returns {foot, bx,by, hx,hy} — the three guide-triangle edge directions
+  // These are identical in both guidance and challenge mode.
+  if(!selectedBase) return null;
+  let h;
+  try{ h=computeHeight(selectedBase.i,selectedBase.j); }catch(e){ return null; }
+  const foot=h.foot;
+  const wp=getWP();
+  const centX=wp.reduce((s,p)=>s+p[0],0)/3;
+  const centY=wp.reduce((s,p)=>s+p[1],0)/3;
+
+  // p0→p1 direction: inward along base (toward centroid)
+  const fcx=centX-foot[0], fcy=centY-foot[1];
+  const bSign=(fcx*h.baseDir.nx+fcy*h.baseDir.ny)>=0?1:-1;
+  const bx=h.baseDir.nx*bSign, by=h.baseDir.ny*bSign;
+
+  // p0→p2 direction: toward apex along height
+  const toApexX=h.apex[0]-foot[0], toApexY=h.apex[1]-foot[1];
+  const hSign=(toApexX*h.heightDir.nx+toApexY*h.heightDir.ny)>=0?1:-1;
+  const hx=h.heightDir.nx*hSign, hy=h.heightDir.ny*hSign;
+
+  return {foot, bx, by, hx, hy};
+}
+
+function _sqSnapAngle(g){
+  // Find angle a such that the set square body (corner at origin, +X and -Y legs)
+  // overlaps the guide triangle quadrant (arms bx,by and hx,hy from foot).
+  // The set square body occupies the quadrant between +X and -Y.
+  // Guide quadrant is between (bx,by) and (hx,hy).
+  // We need: +X=(bx,by) AND -Y=(hx,hy), OR +X=(hx,hy) AND -Y=(-bx,-by).
+  //
+  // Case 1: +X = (bx,by)  →  a = atan2(by,bx)
+  //   then -Y = (sin a, -cos a) = (by,-bx)
+  //   valid if (by,-bx) ≈ (hx,hy), i.e. dot(by,-bx, hx,hy) > 0
+  //
+  // Case 2: +X = (hx,hy)  →  a = atan2(hy,hx)
+  //   then -Y = (hy,-hx)
+  //   valid if (hy,-hx) ≈ (bx,by), i.e. dot(hy,-hx, bx,by) > 0
+  //
+  // Exactly one of these two cases is always valid for a right-hand coordinate system.
+  const a1=Math.atan2(g.by,g.bx);
+  const dot1=Math.sin(a1)*g.hx+(-Math.cos(a1))*g.hy; // (by,-bx)·(hx,hy)
+
+  const a2=Math.atan2(g.hy,g.hx);
+  const dot2=Math.sin(a2)*g.bx+(-Math.cos(a2))*g.by; // (hy,-hx)·(bx,by)
+
+  return dot1>=0 ? a1 : a2;
+}
+
+function snapSqToTarget(){
+  const g=_getGuideVectors();
+  if(!g) return;
+  sq.cx=g.foot[0];
+  sq.cy=g.foot[1];
+  sq.angle=_sqSnapAngle(g);
+}
+
+function positionSqForGuidance(){
+  const g=_getGuideVectors();
+  if(!g){sq.cx=W/2;sq.cy=H/2;sq.angle=0;sq.leg=SQ_LEG_DEFAULT;return;}
+  let h;
+  try{h=computeHeight(selectedBase.i,selectedBase.j);}catch(e){return;}
+  sq.cx=g.foot[0];sq.cy=g.foot[1];
+  sq.angle=_sqSnapAngle(g);
+  sq.leg=Math.min(SQ_LEG_DEFAULT,Math.max(130,h.height*0.75));
+}
+
+function clearAll(){
+  hl=null; lineAct='none'; snapEdge=null; angleSnapped=false;
+  setSquareRequired=false;
+  sqPlaced=false;
+  showSetSq=false; document.getElementById('setsqBtn').classList.remove('on');
+  document.getElementById('sqPromptOverlay').style.display='none';
+  vtxScale=false; vtxScaleIdx=-1;
+  showExtension=false; document.getElementById('extBtn').classList.remove('on');
+  if(showGuidance&&solved){ /* keep guidance on between rounds */ }
+  if(scaleMode){ scaleMode=false; document.getElementById('scaleBtn').classList.remove('on'); }
+  selectedBase=null; hoverBase=null;
+  phase='base'; solved=false; attempts=0;
+  document.getElementById('attCount').textContent=0;
+  document.getElementById('checkBtn').style.display='none';
+  document.getElementById('nextBtn').style.display='none';
+  document.getElementById('step1badge').style.opacity='1';
+  document.getElementById('step2badge').style.opacity='0.35';
+  document.getElementById('phaseLabel').textContent='Phase 1 — Pick a Base';
+  setFb('Click a side of the triangle to select the base.','fb-info');
+  document.getElementById('hintBox').innerHTML='Start by clicking a <strong>side</strong> of the triangle to choose the base.';
+  hideHintBanners();
+  render();
+}
+
+function advanceToNextBase(prevDef){
+  const nextDef=nextRequiredDef();
+  // If no next def, tune is complete — do nothing
+  if(!nextDef || gameState.tuneComplete) return;
+  // If next def is same cat, stay on same triangle and reset to base-selection phase
+  if(nextDef.cat===selectedCat){
+    if(nextDef.baseSlot==='extend'){
+      newTriangle();
+      return;
+    }
+    // Reset state to allow selecting a new base on the same triangle
+    hl=null; lineAct='none'; snapEdge=null; angleSnapped=false;
+    solved=false; attempts=0;
+    showExtension=false; document.getElementById('extBtn').classList.remove('on');
+    showSetSq=false; document.getElementById('setsqBtn').classList.remove('on');
+    sqPlaced=false; setSquareRequired=false;
+    document.getElementById('attCount').textContent=0;
+    document.getElementById('checkBtn').style.display='none';
+    document.getElementById('nextBtn').style.display='none';
+    document.getElementById('phaseLabel').textContent='Phase 1 — Pick a Base';
+    phase='base';
+    selectedBase=null; hoverBase=null;
+    hideHintBanners();
+    render();
+    setTimeout(()=>promptNextBase(),300);
+  }
+  // Different cat case handled by closeMastery auto-progress
+}
+
+function nextChallenge(){level++;document.getElementById('levelNum').textContent=level;newTriangle();}
+function newTriangle(){
+  tri.pts = generateTriPts(selectedCat);
+  tri.angle = Math.random()*Math.PI*2;
+  tri.cx = W/2; tri.cy = H/2;
+  solvedBasesThisTri=[];
+  currentBaseEdges=[{i:0,j:1},{i:1,j:2},{i:2,j:0}];
+  clearAll();
+  // Let user select base freely — just show hint about which base earns next button
+  setTimeout(promptNextBase,150);
+}
+
+function promptNextBase(){
+  const def=nextRequiredDef();
+  if(!def || def.cat!==selectedCat) return;
+  const btnNum=gameState.nextPhraseIdx+1;
+  if(def.baseSlot==='extend'){
+    setFb(`👆 Pick the side whose height falls OUTSIDE the triangle!`,'fb-info');
+    document.getElementById('hintBox').innerHTML=`Turn on <strong>⟵⟶ Extend Base</strong>, then click the side where the height lands <strong>outside</strong> the triangle. This earns the 🎹 <strong>Magic Piano</strong>!`;
+    showExtension=true;
+    document.getElementById('extBtn').classList.add('on');
+  } else {
+    const sideLabels=['AB','BC','CA'];
+    const baseLabel=sideLabels[def.baseSlot]||'a side';
+    setFb(`👆 Click a side of the triangle to select it as the base!`,'fb-info');
+    document.getElementById('hintBox').innerHTML=`Click a <strong>side</strong> of the triangle to choose the base. <br><small style="color:#5bc8ff;">Tip: use side <strong>${baseLabel}</strong> to earn Music Button ${btnNum}!</small>`;
+  }
+}
+// ══════════════════════════════════════════════════════════════
+//  INSTRUCTION OVERLAYS
+// ══════════════════════════════════════════════════════════════
+const CAT_INSTRUCTIONS={
+  right:{
+    emoji:'🔵📐',
+    title:'Right-angle Triangle Heights',
+    border:'#5bc8ff',
+    body:`A <strong>right-angle triangle</strong> has one corner that is exactly 90°.<br><br>
+You will find the height <strong>three times</strong> — once for each side of the triangle as the base.<br><br>
+For each base, you will be prompted to use the 📐 <strong>Set Square</strong> first. Place it along the base, then draw a straight line from the <strong>opposite vertex</strong> down to the base at a perfect <strong>right angle (90°)</strong>.`,
+    goal:'🎯 Goal: Find the height from all 3 sides → earn Music Buttons 1, 2 & 3!'
+  },
+  acute:{
+    emoji:'🟢📐',
+    title:'Acute Triangle Heights',
+    border:'#3de88a',
+    body:`An <strong>acute triangle</strong> has all three angles smaller than 90°.<br><br>
+You will find the height <strong>three times</strong> — once for each side of the triangle as the base.<br><br>
+For each base, you will be prompted to use the 📐 <strong>Set Square</strong> first. Place it along the base, then draw a perpendicular line from the <strong>opposite vertex</strong> to the base.`,
+    goal:'🎯 Goal: Find the height from all 3 sides → earn Music Buttons 4, 5 & 6!'
+  },
+  obtuse:{
+    emoji:'🟣📐',
+    title:'Obtuse Triangle Heights',
+    border:'#b07eff',
+    body:`An <strong>obtuse triangle</strong> has one angle greater than 90°.<br><br>
+For this challenge, find the height from the <strong>special side</strong> — the one where the height falls <strong>outside</strong> the triangle.<br><br>
+Steps:<br>
+① Click the base side where the height falls outside the triangle<br>
+② Turn on <strong>⟵⟶ Extend Base</strong> to show the base line beyond the triangle<br>
+③ Use the 📐 Set Square, then draw the height to the <strong>extended</strong> base line<br><br>
+This earns you the 🎹 <strong>Magic Piano</strong>!`,
+    goal:'🎯 Goal: Find the height using Extend Base → earn the 🎹 Magic Piano!'
+  }
+};
+
+let instrShownThisSession={right:false,acute:false,obtuse:false};
+
+function showInstructions(cat){
+  const d=CAT_INSTRUCTIONS[cat];
+  document.getElementById('instrEmoji').textContent=d.emoji;
+  document.getElementById('instrTitle').textContent=d.title;
+  document.getElementById('instrTitle').style.color=d.border;
+  document.getElementById('instrBox').style.borderColor=d.border;
+  document.getElementById('instrBox').style.boxShadow=`0 0 50px ${d.border}33,0 24px 80px rgba(0,0,0,.7)`;
+  document.getElementById('instrBody').innerHTML=d.body;
+  document.getElementById('instrGoal').textContent=d.goal;
+  document.getElementById('instrOverlay').style.display='flex';
+}
+
+function closeInstructions(){
+  document.getElementById('instrOverlay').style.display='none';
+  instrShownThisSession[selectedCat]=true;
+}
+
+function spawnCatWithInstructions(cat){
+  spawnCat(cat);
+  buildNavBar(cat); // update active button in nav bar
+  // Always show instructions when switching to a new cat type
+  showInstructions(cat);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SIDEBAR LIVE UPDATE
+// ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+//  MODE SELECTION
+// ══════════════════════════════════════════════════════════════
+let gameMode=''; // 'guidance' or 'challenge'
+
+function showModeSelect(){
+  document.getElementById('modeSelectOverlay').style.display='flex';
+}
+
+function selectMode(mode){
+  gameMode=mode;
+  document.getElementById('modeSelectOverlay').style.display='none';
+  if(mode==='guidance'){
+    showGuidance=true;
+    startGuideAnim();
+    const mb=document.getElementById('modeBadge');
+    if(mb){ mb.textContent='🎯 Guidance Mode'; mb.style.background='rgba(91,200,255,.12)'; mb.style.color='#5bc8ff'; mb.style.border='1.5px solid #5bc8ff'; }
+  } else {
+    showGuidance=false;
+    stopGuideAnim();
+    const mb=document.getElementById('modeBadge');
+    if(mb){ mb.textContent='🏆 Challenge Mode'; mb.style.background='rgba(61,232,138,.12)'; mb.style.color='#3de88a'; mb.style.border='1.5px solid #3de88a'; }
+  }
+  // Spawn a fresh triangle for the chosen mode, then show instructions
+  newTriangle();
+  setTimeout(()=>showInstructions(selectedCat),200);
+}
+
+function updateSidebar(){
+  // Mode badge already set by selectMode — nothing else to update in sidebar
+}
+
+
+
+function spawnCat(cat){
+  selectedCat=cat;
+  newTriangle();
+}
+
+function showHintBanner1(msg){ const el=document.getElementById('hintBannerInline'); if(el){el.textContent=msg;el.style.display='inline';} }
+function showHintBanner2(msg){ /* second hint merged into feedback bar */ }
+function hideHintBanners(){ const el=document.getElementById('hintBannerInline'); if(el) el.style.display='none'; }
+function setFb(msg,cls){const el=document.getElementById('feedback');el.innerHTML=msg;el.className=cls;}
+
+// ══════════════════════════════════════════════════════════════
+//  TOGGLES
+// ══════════════════════════════════════════════════════════════
+function toggleGrid(){showGrid=!showGrid;document.getElementById('gridBtn').classList.toggle('on',showGrid);render();}
+function toggleGuidance(){
+  showGuidance=!showGuidance;
+  if(showGuidance) startGuideAnim();
+  else stopGuideAnim();
+  render();
+}
+function startGuideAnim(){
+  if(guideAnimFrame) return;
+  function step(t){ guideAnim=t; render(); guideAnimFrame=requestAnimationFrame(step); }
+  guideAnimFrame=requestAnimationFrame(step);
+}
+function stopGuideAnim(){
+  if(guideAnimFrame){ cancelAnimationFrame(guideAnimFrame); guideAnimFrame=null; }
+  guideAnim=0;
+}
+function toggleExtension(){
+  showExtension=!showExtension;
+  document.getElementById('extBtn').classList.toggle('on',showExtension);
+  if(showExtension && !gameState.extendBaseUsed){
+    gameState.extendBaseUsed=true;
+    saveState();
+  }
+  // Obtuse extend task: once user presses Extend Base, now show set square guide
+  if(showExtension && selectedBase && phase==='height'){
+    const curDefExt=nextRequiredDef();
+    const isExtTask=(curDefExt && curDefExt.baseSlot==='extend' && selectedCat==='obtuse');
+    if(isExtTask){
+      setSquareRequired=false;
+      showSetSq=true;
+      document.getElementById('setsqBtn').classList.add('on');
+      sq.cx=Math.min(W-80,W*0.15); sq.cy=H*0.50; sq.angle=0; sq.leg=SQ_LEG_DEFAULT;
+      if(gameMode==='guidance'){
+        setFb('📐 Great! Now drag the Set Square corner to the ② green dot — it will snap!','fb-info');
+        showHintBanner1('Then draw height from ① to ② on the extended base line');
+      } else {
+        setFb('📐 Great! Now drag the Set Square to the base foot, then draw the height.','fb-warn');
+        showHintBanner1('Height must touch the extended base line');
+      }
+    }
+  }
+  render();
+}
+function toggleSetSquare(){
+  showSetSq=!showSetSq;
+  document.getElementById('setsqBtn').classList.toggle('on',showSetSq);
+  if(showSetSq){
+    if(setSquareRequired){
+      // User turned on set square manually — satisfy requirement
+      setSquareRequired=false;
+      document.getElementById('sqPromptOverlay').style.display='none';
+      sq.cx=Math.min(W-60,W*0.73);sq.cy=H*0.52;sq.angle=0;sq.leg=SQ_LEG_DEFAULT;
+      setFb('📐 Set Square on! Align one edge with the base, then draw the height.','fb-info');
+      document.getElementById('hintBox').innerHTML='Line one edge along the <strong>base</strong>, then draw the height line at 90°.';
+    } else {
+      sq.cx=Math.min(W-60,W*0.73);sq.cy=H*0.52;sq.angle=0;sq.leg=SQ_LEG_DEFAULT;
+    }
+  }
+  render();
+}
+function toggleMoveMode(){
+  moveMode=!moveMode;if(moveMode){rotMode=false;scaleMode=false;}
+  document.getElementById('moveBtn').classList.toggle('on',moveMode);
+  document.getElementById('rotBtn').classList.remove('on');
+  document.getElementById('scaleBtn').classList.remove('on');
+  canvas.style.cursor=moveMode?'grab':'default';
+}
+function toggleRotMode(){
+  rotMode=!rotMode;if(rotMode){moveMode=false;scaleMode=false;}
+  document.getElementById('rotBtn').classList.toggle('on',rotMode);
+  document.getElementById('moveBtn').classList.remove('on');
+  document.getElementById('scaleBtn').classList.remove('on');
+  canvas.style.cursor=rotMode?'alias':'default';
+}
+function toggleScaleMode(){
+  scaleMode=!scaleMode;if(scaleMode){moveMode=false;rotMode=false;}
+  document.getElementById('scaleBtn').classList.toggle('on',scaleMode);
+  document.getElementById('moveBtn').classList.remove('on');
+  document.getElementById('rotBtn').classList.remove('on');
+  canvas.style.cursor=scaleMode?'nwse-resize':'default';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LINE HIT TEST
+// ══════════════════════════════════════════════════════════════
+function hitLine(px,py){
+  if(!hl) return 'none';
+  if(Math.hypot(px-hl.x1,py-hl.y1)<=HNDL) return 'p1';
+  if(Math.hypot(px-hl.x2,py-hl.y2)<=HNDL) return 'p2';
+  if(ptSegDist(px,py,hl.x1,hl.y1,hl.x2,hl.y2)<=8) return 'body';
+  return 'none';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════════════
+function render(){
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#0d1b2e');bg.addColorStop(1,'#091420');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  if(showGrid) rGrid();
+  if(sqPlaced && selectedBase) snapSqToTarget();
+  rTriangle();
+  if(showGuidance && selectedBase && phase==='height' && !solved) rGuidance();
+  if(showSetSq) rSetSquare();
+  rStepBanner();
+  if(hl) rLine();
+}
+
+function rGuidance(){
+  if(!selectedBase||!tri.pts||tri.pts.length<3) return;
+  // Don't draw guidance if obtuse extend task and foot is inside triangle
+  const curDef=nextRequiredDef();
+  const isExtendTask=(curDef && curDef.baseSlot==='extend' && selectedCat==='obtuse');
+  if(isExtendTask && !footOutsideBase()) return;
+  let h;
+  try{ h=computeHeight(selectedBase.i,selectedBase.j); }
+  catch(e){ return; }
+  const apex=h.apex;   // [x,y] — top endpoint
+  const foot=h.foot;   // [x,y] — base endpoint
+
+  // Pulse timing: 0→1→0 using sine wave
+  const pulse=0.5+0.5*Math.sin(guideAnim*0.004);
+  const innerR=16+pulse*6;
+  const outerR=28+pulse*10;
+  const lineAlpha=0.35+pulse*0.3;
+
+  ctx.save();
+
+  // ── Dashed ghost height line ──
+  ctx.setLineDash([10,6]);
+  ctx.strokeStyle=`rgba(255,255,255,${lineAlpha})`;
+  ctx.lineWidth=2.5;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(apex[0],apex[1]);
+  ctx.lineTo(foot[0],foot[1]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── Draw one glowing endpoint ──
+  function drawEndpoint(x,y,col,label,labelBelow){
+    // Outer glow ring
+    ctx.beginPath();
+    ctx.arc(x,y,outerR,0,Math.PI*2);
+    ctx.fillStyle=col.replace(')',`,${0.12+pulse*0.12})`).replace('rgb','rgba');
+    ctx.fill();
+    // Mid ring
+    ctx.beginPath();
+    ctx.arc(x,y,innerR,0,Math.PI*2);
+    ctx.fillStyle=col.replace(')',`,${0.25+pulse*0.15})`).replace('rgb','rgba');
+    ctx.fill();
+    // Inner bright dot
+    ctx.beginPath();
+    ctx.arc(x,y,9,0,Math.PI*2);
+    ctx.fillStyle=col;
+    ctx.shadowColor=col;
+    ctx.shadowBlur=20+pulse*16;
+    ctx.fill();
+    ctx.shadowBlur=0;
+    // White centre
+    ctx.beginPath();
+    ctx.arc(x,y,4,0,Math.PI*2);
+    ctx.fillStyle='#ffffff';
+    ctx.fill();
+    // Label
+    const labelY=labelBelow ? y+outerR+18 : y-outerR-8;
+    ctx.font='bold 13px Baloo 2,cursive';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    // Pill background
+    const tw=ctx.measureText(label).width;
+    ctx.fillStyle='rgba(5,12,25,0.85)';
+    ctx.beginPath();
+    ctx.roundRect(x-tw/2-10,labelY-13,tw+20,26,8);
+    ctx.fill();
+    ctx.fillStyle='#ffffff';
+    ctx.fillText(label,x,labelY);
+  }
+
+  // Apex = where student starts drawing (top dot) — gold
+  const apexBelow = apex[1] < foot[1]; // label direction
+  drawEndpoint(apex[0],apex[1],'rgb(249,208,48)','① Start here', apexBelow);
+
+  // Foot = where line meets base — green/teal
+  const footBelow = foot[1] < apex[1];
+  drawEndpoint(foot[0],foot[1],'rgb(61,232,138)','② End here (base)', footBelow);
+
+  // ── Guide triangle at foot (visible in guidance, invisible in challenge) ──
+  {
+    const g=_getGuideVectors();
+    if(g){
+      const sqPulse=0.5+0.5*Math.sin(guideAnim*0.006+1.5);
+      const zoneLen=Math.min(160, Math.max(80, h.height*0.65));
+      const p0x=foot[0], p0y=foot[1];
+      const p1x=foot[0]+g.bx*zoneLen, p1y=foot[1]+g.by*zoneLen;
+      const p2x=foot[0]+g.hx*zoneLen, p2y=foot[1]+g.hy*zoneLen;
+
+      ctx.save();
+      if(gameMode==='guidance'){
+        // Filled glow area
+        ctx.beginPath();
+        ctx.moveTo(p0x,p0y); ctx.lineTo(p1x,p1y); ctx.lineTo(p2x,p2y);
+        ctx.closePath();
+        ctx.fillStyle=`rgba(249,208,48,${0.08+sqPulse*0.10})`;
+        ctx.fill();
+        // Pulsing dashed border
+        ctx.strokeStyle=`rgba(249,208,48,${0.50+sqPulse*0.45})`;
+        ctx.lineWidth=2.5; ctx.setLineDash([8,5]); ctx.stroke(); ctx.setLineDash([]);
+        // Right-angle box
+        const SH=22;
+        ctx.strokeStyle=`rgba(249,208,48,${0.90+sqPulse*0.10})`;
+        ctx.lineWidth=2.5;
+        ctx.shadowColor='rgba(249,208,48,0.9)'; ctx.shadowBlur=10+sqPulse*10;
+        ctx.beginPath();
+        ctx.moveTo(p0x+g.bx*SH, p0y+g.by*SH);
+        ctx.lineTo(p0x,          p0y);
+        ctx.lineTo(p0x+g.hx*SH, p0y+g.hy*SH);
+        ctx.stroke(); ctx.shadowBlur=0;
+        // Label
+        const labelX=(p0x+p1x+p2x)/3, labelY=(p0y+p1y+p2y)/3;
+        ctx.font='bold 12px Baloo 2,cursive';
+        const lbl='📐 place here';
+        const lw=ctx.measureText(lbl).width;
+        ctx.fillStyle='rgba(5,12,25,0.85)';
+        ctx.beginPath(); ctx.roundRect(labelX-lw/2-8,labelY-12,lw+16,24,6); ctx.fill();
+        ctx.fillStyle=`rgba(249,208,48,${0.90+sqPulse*0.10})`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(lbl,labelX,labelY);
+      }
+      // In challenge mode: guide triangle is invisible but snap still uses same vectors
+      ctx.restore();
+    }
+  }
+
+  // ── Set square placement status — shown via HTML hint banners ──
+
+  // ── Arrow hint in the middle ──
+  const mx=(apex[0]+foot[0])/2, my=(apex[1]+foot[1])/2;
+  const angle=Math.atan2(foot[1]-apex[1],foot[0]-apex[0]);
+  ctx.save();
+  ctx.translate(mx,my);
+  ctx.rotate(angle);
+  ctx.fillStyle=`rgba(255,255,255,${0.4+pulse*0.3})`;
+  ctx.beginPath();
+  // Simple arrow chevron
+  ctx.moveTo(0,0); ctx.lineTo(-14,-7); ctx.lineTo(-10,0); ctx.lineTo(-14,7); ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+
+// ── Canvas step banner — shows 3 active phases at top of canvas ──
+function rStepBanner(){
+  if(solved) return;
+
+  // Determine active step
+  const step1Active = phase==='base';
+  const step2Active = phase==='height' && !sqPlaced;
+  const step3Active = phase==='height' && sqPlaced;
+
+  const steps=[
+    {label:'① Select Base',    active:step1Active, col:'rgba(249,208,48,',  dark:'#1a1000'},
+    {label:'② Place Set Square',active:step2Active, col:'rgba(176,126,255,', dark:'#1a0040'},
+    {label:'③ Draw Height',    active:step3Active, col:'rgba(61,232,138,',  dark:'#051a0e'},
+  ];
+
+  const pad=12, gap=8, r=10, y=18;
+  ctx.save();
+  ctx.font='bold 13px Baloo 2,cursive';
+
+  // Measure all widths first
+  const widths=steps.map(s=>ctx.measureText(s.label).width+pad*2);
+  const totalW=widths.reduce((a,b)=>a+b,0)+(steps.length-1)*gap;
+  let x=W/2 - totalW/2;
+
+  steps.forEach((s,i)=>{
+    const w=widths[i];
+    const alpha=s.active?'0.95':'0.18';
+    const strokeAlpha=s.active?'0.9':'0.35';
+
+    // Glow if active
+    if(s.active){
+      ctx.shadowColor=`${s.col}0.7)`;
+      ctx.shadowBlur=14;
+    }
+    ctx.fillStyle=`${s.col}${alpha})`;
+    ctx.beginPath();ctx.roundRect(x,y-r,w,r*2,r);ctx.fill();
+    ctx.shadowBlur=0;
+
+    ctx.strokeStyle=`${s.col}${strokeAlpha})`;
+    ctx.lineWidth=s.active?2:1.5;
+    ctx.beginPath();ctx.roundRect(x,y-r,w,r*2,r);ctx.stroke();
+
+    ctx.fillStyle=s.active?s.dark:`${s.col}0.7)`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(s.label,x+w/2,y);
+
+    x+=w+gap;
+  });
+
+  ctx.restore();
+}
+
+function rGrid(){
+  const C=40;ctx.save();
+  ctx.strokeStyle='rgba(91,200,255,0.07)';ctx.lineWidth=1;
+  for(let x=C;x<W;x+=C){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=C;y<H;y+=C){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.fillStyle='rgba(91,200,255,0.18)';
+  for(let x=C;x<W;x+=C)for(let y=C;y<H;y+=C){ctx.beginPath();ctx.arc(x,y,1.5,0,Math.PI*2);ctx.fill();}
+  ctx.restore();
+}
+
+function rTriangle(){
+  const wp=getWP();
+  ctx.save();
+
+  // ── Fill ──
+  ctx.beginPath();ctx.moveTo(...wp[0]);wp.slice(1).forEach(p=>ctx.lineTo(...p));ctx.closePath();
+  ctx.fillStyle='rgba(91,200,255,0.10)';ctx.fill();
+
+  // ── Draw each edge individually so we can colour the selected/hovered one ──
+  const edgeNames=['AB','BC','CA'];
+  for(let i=0;i<3;i++){
+    const j=(i+1)%3;
+    const isSelected=selectedBase&&selectedBase.i===i&&selectedBase.j===j;
+    const isHovered=hoverBase&&hoverBase.i===i&&hoverBase.j===j&&phase==='base'&&!solved;
+    const isSolvedEdge=solvedBasesThisTri.some(b=>(b.i===i&&b.j===j)||(b.i===j&&b.j===i));
+
+    ctx.beginPath();ctx.moveTo(...wp[i]);ctx.lineTo(...wp[j]);
+    if(isSelected){
+      // Bold gold base
+      ctx.strokeStyle='#f9d030';ctx.lineWidth=5;ctx.lineCap='round';
+      ctx.shadowColor='rgba(249,208,48,0.6)';ctx.shadowBlur=12;ctx.stroke();ctx.shadowBlur=0;
+
+      // ── Base extension lines (dashed, beyond both ends) ──
+      if(showExtension){
+        const EXT=600; // how far to extend in px
+        const ax=wp[i][0],ay=wp[i][1],bx=wp[j][0],by=wp[j][1];
+        const len=Math.hypot(bx-ax,by-ay)||1;
+        const nx=(bx-ax)/len,ny=(by-ay)/len;
+        ctx.save();
+        ctx.strokeStyle='rgba(249,208,48,0.65)';ctx.lineWidth=2.5;
+        ctx.setLineDash([10,7]);ctx.lineCap='butt';
+        ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax-nx*EXT,ay-ny*EXT);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+nx*EXT,by+ny*EXT);ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      // Label "BASE (AB)" on it
+      const mx=(wp[i][0]+wp[j][0])/2,my=(wp[i][1]+wp[j][1])/2;
+      const cx3=wp.reduce((s,p)=>s+p[0],0)/3,cy3=wp.reduce((s,p)=>s+p[1],0)/3;
+      const dx=mx-cx3,dy=my-cy3,dl=Math.hypot(dx,dy)||1;
+      ctx.font='bold 13px Baloo 2,cursive';ctx.fillStyle='#f9d030';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('BASE ('+edgeNames[i]+')',mx+dx/dl*26,my+dy/dl*26);
+    } else if(isSolvedEdge){
+      // Green tick — already done
+      ctx.strokeStyle='rgba(61,232,138,0.7)';ctx.lineWidth=3;ctx.lineCap='round';ctx.stroke();
+      // Tick label
+      const mx2=(wp[i][0]+wp[j][0])/2,my2=(wp[i][1]+wp[j][1])/2;
+      const cx3b=wp.reduce((s,p)=>s+p[0],0)/3,cy3b=wp.reduce((s,p)=>s+p[1],0)/3;
+      const dx2=mx2-cx3b,dy2=my2-cy3b,dl2=Math.hypot(dx2,dy2)||1;
+      const lx2=mx2+dx2/dl2*22, ly2=my2+dy2/dl2*22;
+      ctx.font='bold 12px Baloo 2,cursive';
+      ctx.fillStyle='rgba(5,12,25,0.75)';ctx.beginPath();ctx.arc(lx2,ly2,11,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#3de88a';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('✓',lx2,ly2);
+    } else if(isHovered){
+      ctx.strokeStyle='#ffe57a';ctx.lineWidth=4;ctx.lineCap='round';ctx.shadowColor='rgba(255,229,122,0.4)';ctx.shadowBlur=8;ctx.stroke();ctx.shadowBlur=0;
+      // Show side name on hover
+      const mx3=(wp[i][0]+wp[j][0])/2,my3=(wp[i][1]+wp[j][1])/2;
+      const cx3c=wp.reduce((s,p)=>s+p[0],0)/3,cy3c=wp.reduce((s,p)=>s+p[1],0)/3;
+      const dx3=mx3-cx3c,dy3=my3-cy3c,dl3=Math.hypot(dx3,dy3)||1;
+      ctx.font='bold 12px Baloo 2,cursive';ctx.fillStyle='#ffe57a';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(edgeNames[i],mx3+dx3/dl3*22,my3+dy3/dl3*22);
+    } else {
+      ctx.strokeStyle='#5bc8ff';ctx.lineWidth=3;ctx.lineCap='round';ctx.stroke();
+    }
+  }
+
+  // ── Vertex dots and labels A, B, C ──
+  const vtxLabels=['A','B','C'];
+  wp.forEach((p,i)=>{
+    // Dot
+    ctx.beginPath();ctx.arc(p[0],p[1],5,0,Math.PI*2);
+    ctx.fillStyle='#5bc8ff';ctx.shadowColor='rgba(91,200,255,0.8)';ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;
+    // Label position: push outward from centroid
+    const cx3=wp.reduce((s,pt)=>s+pt[0],0)/3;
+    const cy3=wp.reduce((s,pt)=>s+pt[1],0)/3;
+    const dx=p[0]-cx3, dy=p[1]-cy3;
+    const dl=Math.hypot(dx,dy)||1;
+    const lx=p[0]+dx/dl*20, ly=p[1]+dy/dl*20;
+    ctx.font='bold 14px Baloo 2,cursive';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='rgba(5,12,25,0.75)';
+    ctx.beginPath();ctx.arc(lx,ly,10,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f0ece0';
+    ctx.fillText(vtxLabels[i],lx,ly);
+  });
+
+  // ── Obtuse angle highlight (only for obtuse triangles) ──
+  if(selectedCat==='obtuse'){
+    const oi=obtuseVertexIdx(tri.pts);
+    if(oi>=0){
+      const prev=wp[(oi+2)%3], curr=wp[oi], next=wp[(oi+1)%3];
+      const a1=Math.atan2(prev[1]-curr[1],prev[0]-curr[0]);
+      const a2=Math.atan2(next[1]-curr[1],next[0]-curr[0]);
+      let sweep = a2 - a1;
+      while(sweep >  Math.PI) sweep -= 2*Math.PI;
+      while(sweep < -Math.PI) sweep += 2*Math.PI;
+      const angles=triAngles(tri.pts);
+      const angleDeg=Math.round(angles[oi]);
+      // Arc radius = 22% of shortest adjacent edge, clamped 20–45px
+      const edgePrev=Math.hypot(prev[0]-curr[0],prev[1]-curr[1]);
+      const edgeNext=Math.hypot(next[0]-curr[0],next[1]-curr[1]);
+      const R=Math.max(20, Math.min(45, Math.min(edgePrev,edgeNext)*0.22));
+      ctx.save();
+      ctx.strokeStyle='rgba(176,126,255,0.95)';ctx.lineWidth=3;
+      ctx.beginPath();
+      ctx.arc(curr[0],curr[1],R,a1,a2,sweep<0);
+      ctx.stroke();
+      // Degree label along the bisector
+      const bisect=a1+sweep/2;
+      const LR=R+16;
+      ctx.fillStyle='#b07eff';ctx.font='bold 13px Baloo 2,cursive';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(angleDeg+'°',curr[0]+Math.cos(bisect)*LR,curr[1]+Math.sin(bisect)*LR);
+      ctx.restore();
+    }
+  }
+
+  // ── If base selected and solved, draw the correct height ghosted ──
+  if(selectedBase && solved){
+    const h=computeHeight(selectedBase.i,selectedBase.j);
+    ctx.save();
+    ctx.strokeStyle='rgba(61,232,138,0.4)';ctx.lineWidth=2.5;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(...h.apex);ctx.lineTo(...h.foot);ctx.stroke();
+    ctx.setLineDash([]);
+    // right-angle box at foot — corner at foot, arms along base and height
+    const centX=wp.reduce((s,p)=>s+p[0],0)/3;
+    const centY=wp.reduce((s,p)=>s+p[1],0)/3;
+    const fcx=centX-h.foot[0], fcy=centY-h.foot[1];
+    const bSign=(fcx*h.baseDir.nx+fcy*h.baseDir.ny)>=0?1:-1;
+    const bx=h.baseDir.nx*bSign, by=h.baseDir.ny*bSign;
+    const nx=h.heightDir.nx,ny=h.heightDir.ny;
+    const hSign=(h.apex[0]-h.foot[0])*nx+(h.apex[1]-h.foot[1])*ny>=0?1:-1;
+    const hx=nx*hSign, hy=ny*hSign;
+    const S=22;
+    ctx.strokeStyle='rgba(61,232,138,0.7)';ctx.lineWidth=2.5;
+    ctx.beginPath();
+    // Corner at foot, arm1 along base, arm2 along height
+    ctx.moveTo(h.foot[0]+bx*S,  h.foot[1]+by*S);
+    ctx.lineTo(h.foot[0],        h.foot[1]);
+    ctx.lineTo(h.foot[0]+hx*S,  h.foot[1]+hy*S);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Vertex scale handles (only in scale mode) ──
+  if(scaleMode && !solved){
+    wp.forEach((p,i)=>{
+      const isActive=vtxScale&&vtxScaleIdx===i;
+      ctx.save();
+      // outer glow ring
+      ctx.beginPath();ctx.arc(p[0],p[1],VTX_HIT+3,0,Math.PI*2);
+      ctx.fillStyle=isActive?'rgba(244,200,66,0.25)':'rgba(96,180,240,0.12)';ctx.fill();
+      // handle circle
+      ctx.beginPath();ctx.arc(p[0],p[1],VTX_HIT,0,Math.PI*2);
+      ctx.strokeStyle=isActive?'#f4c842':'rgba(96,180,240,0.6)';
+      ctx.lineWidth=isActive?2.5:1.5;ctx.stroke();
+      // ↔ resize icon (two small arrows)
+      ctx.strokeStyle=isActive?'#f4c842':'rgba(96,180,240,0.7)';ctx.lineWidth=1.5;
+      const r=5;
+      ctx.beginPath();ctx.moveTo(p[0]-r,p[1]);ctx.lineTo(p[0]+r,p[1]);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(p[0],p[1]-r);ctx.lineTo(p[0],p[1]+r);ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  ctx.restore();
+}
+
+function rLine(){
+  const {x1,y1,x2,y2}=hl;
+  const lineLen=Math.hypot(x2-x1,y2-y1);
+  const col=solved?'#3de88a':'#ff5f7a';
+
+  ctx.save();
+
+  // ── Body ──
+  ctx.strokeStyle=col;ctx.lineWidth=3;ctx.lineCap='round';
+  ctx.setLineDash([8,5]);
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── Handles ──
+  [[x1,y1],[x2,y2]].forEach(([px,py])=>{
+    // glow
+    ctx.beginPath();ctx.arc(px,py,HNDL+4,0,Math.PI*2);
+    ctx.fillStyle=solved?'rgba(61,232,138,0.2)':'rgba(255,95,122,0.18)';ctx.fill();
+    // circle
+    ctx.beginPath();ctx.arc(px,py,HNDL,0,Math.PI*2);
+    ctx.fillStyle=col;ctx.shadowColor=col+'88';ctx.shadowBlur=10;ctx.fill();ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(255,255,255,0.65)';ctx.lineWidth=2;ctx.stroke();
+    // crosshair
+    ctx.strokeStyle='rgba(255,255,255,0.85)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(px-4.5,py);ctx.lineTo(px+4.5,py);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(px,py-4.5);ctx.lineTo(px,py+4.5);ctx.stroke();
+  });
+
+  // ── Right-angle box at intersection with base (infinite line) ──
+  if(angleSnapped && selectedBase && !solved){
+    const h=computeHeight(selectedBase.i,selectedBase.j);
+    const wp=getWP();
+    // Project p1 onto the infinite base line → foot (intersection point)
+    const ax=wp[selectedBase.i][0], ay=wp[selectedBase.i][1];
+    const bDir=h.baseDir;
+    const t=(x1-ax)*bDir.nx+(y1-ay)*bDir.ny;
+    const footX=ax+t*bDir.nx, footY=ay+t*bDir.ny;
+
+    // Height arm direction: from foot toward the far end of the drawn line
+    // p1 is the anchor (snapped end), p2 is the apex end — so height dir is p1→p2
+    const ldx2=(x2-x1)/lineLen, ldy2=(y2-y1)/lineLen;
+    // But p1 might not be the base end. Find which endpoint is closer to the foot.
+    const d1f=Math.hypot(x1-footX,y1-footY);
+    const d2f=Math.hypot(x2-footX,y2-footY);
+    // hDir points FROM foot TOWARD apex (away from base, into the triangle)
+    const hDir = d1f < d2f
+      ? { nx: ldx2,  ny: ldy2  }   // p1 is at foot, p2 is apex
+      : { nx: -ldx2, ny: -ldy2 };  // p2 is at foot, p1 is apex
+
+    // Base arm direction: the bDir might point either way along the base.
+    // Pick the direction such that the box corner falls inside the triangle.
+    // The triangle centroid tells us which side is "inside".
+    const centX=wp.reduce((s,p)=>s+p[0],0)/3;
+    const centY=wp.reduce((s,p)=>s+p[1],0)/3;
+    // Vector from foot to centroid
+    const fcx=centX-footX, fcy=centY-footY;
+    // Project onto base direction — choose bDir sign to point toward centroid
+    const bSign=(fcx*bDir.nx+fcy*bDir.ny)>=0 ? 1 : -1;
+    const bx=bDir.nx*bSign, by=bDir.ny*bSign;
+
+    const S=22;
+    ctx.save();
+    ctx.shadowColor='rgba(61,232,138,0.9)'; ctx.shadowBlur=16;
+    ctx.strokeStyle='rgba(61,232,138,1)'; ctx.lineWidth=3.5;
+    ctx.beginPath();
+    // Corner at foot, arm1 along base inward, arm2 along height toward apex
+    ctx.moveTo(footX + bx*S,       footY + by*S);
+    ctx.lineTo(footX,               footY);
+    ctx.lineTo(footX + hDir.nx*S,  footY + hDir.ny*S);
+    ctx.stroke();
+    ctx.restore();
+
+    // "snapped" pill label — offset opposite to height direction so it doesn't overlap
+    ctx.save();
+    ctx.font='bold 11px Baloo 2,cursive';
+    const stxt='⟂ snapped!';
+    const stw=ctx.measureText(stxt).width;
+    const offX=-hDir.nx*28, offY=-hDir.ny*28;
+    ctx.fillStyle='rgba(20,70,35,0.92)';
+    ctx.beginPath();ctx.roundRect(footX+offX-stw/2-8,footY+offY-10,stw+16,20,6);ctx.fill();
+    ctx.fillStyle='#5ed08a';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(stxt,footX+offX,footY+offY);
+    ctx.restore();
+  }
+
+  // ── Length chip ──
+  const mx=(x1+x2)/2,my=(y1+y2)/2;
+  const txt=lineLen.toFixed(1)+' px';
+  ctx.font='bold 12px Baloo 2,cursive';
+  const tw=ctx.measureText(txt).width;
+  ctx.fillStyle=solved?'rgba(20,60,30,0.88)':'rgba(55,15,15,0.85)';
+  ctx.beginPath();ctx.roundRect(mx-tw/2-7,my-15,tw+14,19,5);ctx.fill();
+  ctx.fillStyle=solved?'#5ed08a':'#ff9090';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,mx,my-6);
+
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────────
+//  SET SQUARE RENDER  (realistic 45-45-90 acrylic)
+// ─────────────────────────────────────────────────
+function rSetSquare(){
+  const L=sq.leg;
+  ctx.save();
+  ctx.translate(sq.cx,sq.cy);ctx.rotate(sq.angle);
+
+  // Shadow
+  ctx.save();ctx.shadowColor='rgba(0,0,0,0.4)';ctx.shadowBlur=14;
+  ctx.shadowOffsetX=5;ctx.shadowOffsetY=5;
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(L,0);ctx.lineTo(0,-L);ctx.closePath();
+  ctx.fillStyle='rgba(80,180,130,0.01)';ctx.fill();ctx.restore();
+
+  // Acrylic body
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(L,0);ctx.lineTo(0,-L);ctx.closePath();
+  const g=ctx.createLinearGradient(0,-L,L,0);
+  g.addColorStop(0,'rgba(120,220,170,0.36)');g.addColorStop(.45,'rgba(160,235,200,0.26)');
+  g.addColorStop(1,'rgba(80,185,140,0.34)');ctx.fillStyle=g;ctx.fill();
+
+  // Shine
+  ctx.save();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(L,0);ctx.lineTo(0,-L);ctx.closePath();ctx.clip();
+  const sg=ctx.createLinearGradient(0,-L*.6,L*.25,0);
+  sg.addColorStop(0,'rgba(255,255,255,0.20)');sg.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=sg;ctx.fillRect(-5,-L-5,L+10,L+10);ctx.restore();
+
+  // Border
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(L,0);ctx.lineTo(0,-L);ctx.closePath();
+  ctx.strokeStyle='rgba(50,155,105,0.92)';ctx.lineWidth=2.5;ctx.lineJoin='miter';ctx.stroke();
+
+  // Inner bevel
+  const BV=10;
+  ctx.strokeStyle='rgba(60,165,115,0.5)';ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(BV,-BV);ctx.lineTo(L-BV*1.6,-BV);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(BV,-BV);ctx.lineTo(BV,-L+BV*1.6);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(L-BV*1.6,-BV);ctx.lineTo(BV,-L+BV*1.6);ctx.stroke();
+
+  // Right-angle box — corner at (0,0) which is sq.cx/sq.cy = the foot when snapped
+  const SB=22;ctx.strokeStyle='rgba(40,130,88,0.95)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(SB,0);ctx.lineTo(0,0);ctx.lineTo(0,-SB);ctx.stroke();
+
+  // Ticks — horizontal leg
+  const TS=8,numT=Math.floor((L-BV*2)/TS);
+  ctx.strokeStyle='rgba(35,110,72,0.85)';ctx.fillStyle='rgba(25,85,55,0.9)';
+  for(let i=1;i<=numT;i++){
+    const x=i*TS;if(x>L-6) break;
+    const maj=(i%10===0),med=(i%5===0);
+    const th=maj?13:med?9:5;ctx.lineWidth=maj?1.5:med?1.1:0.7;
+    ctx.beginPath();ctx.moveTo(x,-2.5);ctx.lineTo(x,-2.5-th);ctx.stroke();
+    if(maj&&x<L-22){ctx.save();ctx.font='bold 7.5px Patrick Hand,cursive';
+      ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(String(i),x,-2.5-th-7);ctx.restore();}
+  }
+  // Ticks — vertical leg
+  for(let i=1;i<=numT;i++){
+    const y=-i*TS;if(y<-L+6) break;
+    const maj=(i%10===0),med=(i%5===0);
+    const th=maj?13:med?9:5;ctx.lineWidth=maj?1.5:med?1.1:0.7;
+    ctx.beginPath();ctx.moveTo(2.5,y);ctx.lineTo(2.5+th,y);ctx.stroke();
+    if(maj&&-y<L-22){ctx.save();ctx.font='bold 7.5px Patrick Hand,cursive';
+      ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(String(i),2.5+th+4,y);ctx.restore();}
+  }
+  // Ticks — hypotenuse
+  ctx.save();ctx.translate(L,0);ctx.rotate(Math.atan2(-L,-L));
+  const hLen=L*Math.SQRT2,numH=Math.floor((hLen-BV*2)/TS);
+  for(let i=1;i<=numH;i++){
+    const d=i*TS+BV;if(d>hLen-BV) break;
+    const maj=(i%10===0),med=(i%5===0);
+    ctx.lineWidth=maj?1.3:med?.9:.6;ctx.strokeStyle='rgba(35,110,72,0.65)';
+    ctx.beginPath();ctx.moveTo(d,-2);ctx.lineTo(d,-2-(maj?10:med?7:4));ctx.stroke();
+  }ctx.restore();
+
+  // Degree labels
+  ctx.save();ctx.font='bold 9.5px Patrick Hand,cursive';
+  ctx.fillStyle='rgba(30,100,65,0.92)';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('90°',30,-30);ctx.fillText('45°',L-28,-14);ctx.fillText('45°',14,-L+28);ctx.restore();
+
+  // Watermark
+  ctx.save();ctx.translate(L*.5,-L*.5);ctx.rotate(-Math.PI/4);
+  ctx.font='bold 9px Patrick Hand,cursive';ctx.fillStyle='rgba(40,130,85,0.38)';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('SET SQUARE',0,8);ctx.restore();
+
+  // Rotation handle
+  const rHx=L/2,rHy=-L/2;
+  ctx.save();ctx.shadowColor='rgba(244,200,66,0.6)';ctx.shadowBlur=8;
+  ctx.beginPath();ctx.arc(rHx,rHy,12,0,Math.PI*2);
+  ctx.fillStyle='rgba(244,200,66,0.25)';ctx.fill();ctx.restore();
+  ctx.beginPath();ctx.arc(rHx,rHy,12,0,Math.PI*2);
+  ctx.strokeStyle='#f4c842';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#f4c842';ctx.font='bold 14px sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('↺',rHx,rHy+1);
+
+  // Resize handles at the two leg endpoints
+  if(scaleMode){
+    [[L,0],[0,-L]].forEach(([lx,ly])=>{
+      ctx.save();
+      ctx.shadowColor='rgba(94,208,138,0.6)';ctx.shadowBlur=8;
+      ctx.beginPath();ctx.arc(lx,ly,SQ_HNDL,0,Math.PI*2);
+      ctx.fillStyle='rgba(94,208,138,0.22)';ctx.fill();
+      ctx.strokeStyle='#5ed08a';ctx.lineWidth=2;ctx.stroke();
+      ctx.restore();
+      // ⤡ icon
+      ctx.fillStyle='#5ed08a';ctx.font='bold 12px sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('⤡',lx,ly);
+    });
+  }
+
+  ctx.restore(); // end local transform
+
+  // Snap glow (world space)
+  if(snapEdge){
+    ctx.save();ctx.strokeStyle='rgba(255,240,80,0.75)';ctx.lineWidth=5;ctx.lineCap='round';
+    ctx.shadowColor='rgba(255,240,80,0.5)';ctx.shadowBlur=10;
+    ctx.beginPath();ctx.moveTo(snapEdge.ax,snapEdge.ay);ctx.lineTo(snapEdge.bx,snapEdge.by);ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  POINTER EVENTS
+// ══════════════════════════════════════════════════════════════
+function getPos(e){
+  const r=canvas.getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  return{x:t.clientX-r.left,y:t.clientY-r.top};
+}
+
+canvas.addEventListener('pointerdown',e=>{
+  const{x,y}=getPos(e);
+  canvas.setPointerCapture(e.pointerId);
+
+  // ── Set square ──
+  if(showSetSq){
+    if(nearSqRot(x,y)){sq.rot=true;sq.rSt={a:sq.angle,ma:Math.atan2(y-sq.cy,x-sq.cx)};return;}
+    if(ptInSq(x,y)){
+      sq.drag=true;
+      // While sq not yet placed: corner tracks pointer directly so the student
+      // can grab any part of the sq and the corner arrives at the foot.
+      if(phase==='height' && !sqPlaced){
+        sq.dOff={x:0,y:0};
+      } else {
+        sq.dOff={x:x-sq.cx,y:y-sq.cy};
+      }
+      return;
+    }
+  }
+
+  // ── Triangle move / rotate / scale ──
+  if(moveMode){
+    if(ptInTri(x,y)){triDrag=true;triDragOff={x:x-tri.cx,y:y-tri.cy};}return;
+  }
+  if(rotMode){
+    if(ptInTri(x,y)){triRot=true;triRotSt={angle:tri.angle,ma:Math.atan2(y-tri.cy,x-tri.cx)};}return;
+  }
+  if(scaleMode){
+    // Set square resize (leg-end handles) — takes priority over triangle vertices
+    if(showSetSq){
+      const sh=hitSqResizeHandle(x,y);
+      if(sh>=0){
+        sq.sqScale=true;
+        sq.sqScaleHandle=sh;
+        sq.sqScaleLeg=sq.leg; // snapshot
+        // Store initial distance from pivot (sq.cx,sq.cy) to pointer in local frame
+        const dx=x-sq.cx,dy=y-sq.cy;
+        const c=Math.cos(-sq.angle),s=Math.sin(-sq.angle);
+        const lx=dx*c-dy*s,ly=dx*s+dy*c;
+        sq.sqScaleDist=Math.abs(sh===1?lx:(-ly)); // project onto the correct axis
+        return;
+      }
+    }
+    // Triangle vertex resize
+    if(showSetSq && (nearSqRot(x,y) || ptInSq(x,y))) return;
+    const vi=hitVertex(x,y);
+    if(vi>=0){
+      vtxScale=true; vtxScaleIdx=vi;
+      const wp=getWP();
+      vtxScaleDist=Math.hypot(wp[vi][0]-tri.cx, wp[vi][1]-tri.cy);
+      vtxScalePts=tri.pts.map(p=>[...p]);
+      hl=null; angleSnapped=false;
+    }
+    return;
+  }
+
+  // ── Phase 1: pick a base ──
+  if(phase==='base'&&!solved){
+    const e2=hoveredEdge(x,y);
+    if(e2){selectBase(e2.i,e2.j);return;}
+    return;
+  }
+
+  // ── Phase 2: draw / edit height line ──
+  if(phase==='height'&&!solved){
+    // Try grabbing existing line
+    if(hl){
+      const hit=hitLine(x,y);
+      if(hit==='p1'){lineAct='drag-p1';return;}
+      if(hit==='p2'){lineAct='drag-p2';return;}
+      if(hit==='body'){
+        lineAct='drag-body';
+        bodyOff={x:x-(hl.x1+hl.x2)/2,y:y-(hl.y1+hl.y2)/2};
+        return;
+      }
+    }
+    // New line — blocked until set square is placed at the correct position
+    if(setSquareRequired){
+      showSqPrompt();
+      return;
+    }
+    // Both modes: sq must be snapped to foot before drawing is allowed
+    if(showSetSq && !sqPlaced){
+      setFb('📐 Drag the Set Square corner to the base foot first — it will snap into place!','fb-warn');
+      return;
+    }
+    lineAct='drawing';
+    const sp=snapPt(x,y);
+    drawStart={x:sp.x,y:sp.y};
+    hl={x1:sp.x,y1:sp.y,x2:sp.x,y2:sp.y};
+  }
+});
+
+// ── Angle-snap: if line is within 0.5° of true perpendicular to selected base,
+//   rotate it to be exactly perpendicular (preserving length and anchor point).
+//   Returns true if snap was applied.
+const ANGLE_SNAP_DEG = 0.5;
+const ANGLE_SNAP_DOT = Math.sin(ANGLE_SNAP_DEG * Math.PI / 180); // ≈ 0.00873
+
+let angleSnapped = false; // used by renderer to show snap indicator
+
+function applyAngleSnap(anchor='none'){
+  if(!hl || !selectedBase) { angleSnapped=false; return; }
+  const {baseDir} = computeHeight(selectedBase.i, selectedBase.j);
+  const ldx=hl.x2-hl.x1, ldy=hl.y2-hl.y1;
+  const lineLen=Math.hypot(ldx,ldy);
+  if(lineLen<2){ angleSnapped=false; return; }
+  const lnx=ldx/lineLen, lny=ldy/lineLen;
+
+  // dot with base direction — 0 means perpendicular, 1 means parallel
+  const dot=Math.abs(lnx*baseDir.nx+lny*baseDir.ny);
+
+  if(dot <= ANGLE_SNAP_DOT){
+    // Snap: compute exact perpendicular direction (normal to base)
+    // Two choices: pick the one closest to current line direction
+    const perpA={ nx:-baseDir.ny, ny: baseDir.nx };
+    const perpB={ nx: baseDir.ny, ny:-baseDir.nx };
+    const dotA=lnx*perpA.nx+lny*perpA.ny;
+    const perp=dotA>=0 ? perpA : perpB;
+
+    if(anchor==='p1'){
+      // p1 fixed, move p2
+      hl.x2=hl.x1+perp.nx*lineLen;
+      hl.y2=hl.y1+perp.ny*lineLen;
+    } else if(anchor==='p2'){
+      // p2 fixed, move p1
+      hl.x1=hl.x2-perp.nx*lineLen;
+      hl.y1=hl.y2-perp.ny*lineLen;
+    } else {
+      // midpoint fixed (body drag or drawing)
+      const mx=(hl.x1+hl.x2)/2, my=(hl.y1+hl.y2)/2;
+      hl.x1=mx-perp.nx*lineLen/2; hl.y1=my-perp.ny*lineLen/2;
+      hl.x2=mx+perp.nx*lineLen/2; hl.y2=my+perp.ny*lineLen/2;
+    }
+    angleSnapped=true;
+  } else {
+    angleSnapped=false;
+  }
+}
+
+canvas.addEventListener('pointermove',e=>{
+  const{x,y}=getPos(e);
+
+  if(sq.rot){sq.angle=sq.rSt.a+(Math.atan2(y-sq.cy,x-sq.cx)-sq.rSt.ma);render();return;}
+  if(sq.drag){
+    sq.cx=x-sq.dOff.x;sq.cy=y-sq.dOff.y;
+    // Auto-snap: fire when the pointer itself OR the corner is within 40px of the foot
+    if(phase==='height' && selectedBase){
+      let hSnap;
+      try{ hSnap=computeHeight(selectedBase.i,selectedBase.j); }catch(e2){}
+      if(hSnap){
+        const ptrNear=Math.hypot(x-hSnap.foot[0],y-hSnap.foot[1])<40;
+        const crnNear=Math.hypot(sq.cx-hSnap.foot[0],sq.cy-hSnap.foot[1])<40;
+        if(ptrNear||crnNear){
+          snapSqToTarget();
+          sqPlaced=true;
+          sq.drag=false;
+          setFb('📐 Set Square snapped! Now draw the height line from ① to ②.','fb-info');
+        }
+      }
+    }
+    render();return;
+  }
+  if(sq.sqScale){
+    // Project pointer into set square's local frame, take distance along the dragged axis
+    const dx=x-sq.cx,dy=y-sq.cy;
+    const c=Math.cos(-sq.angle),s=Math.sin(-sq.angle);
+    const lx=dx*c-dy*s,ly=dx*s+dy*c;
+    const dist=Math.abs(sq.sqScaleHandle===1?lx:(-ly));
+    sq.leg=Math.max(60,Math.min(350,dist));
+    render();return;
+  }
+  if(triDrag){tri.cx=x-triDragOff.x;tri.cy=y-triDragOff.y;render();return;}
+  if(triRot){tri.angle=triRotSt.angle+(Math.atan2(y-tri.cy,x-tri.cx)-triRotSt.ma);render();return;}
+
+  if(vtxScale){
+    // Distance from centroid to pointer in world space
+    const newDist=Math.hypot(x-tri.cx, y-tri.cy);
+    if(vtxScaleDist>1){
+      const scale=Math.max(0.25, Math.min(3.5, newDist/vtxScaleDist));
+      tri.pts=vtxScalePts.map(p=>[p[0]*scale, p[1]*scale]);
+    }
+    // Reset height line; keep selected base (indices still valid, just scaled)
+    hl=null; angleSnapped=false;
+    render();return;
+  }
+
+  if(lineAct==='drawing'){
+    const sp=snapPt(x,y);
+    if(snapEdge&&!sp.snapped){
+      const dx=x-drawStart.x,dy=y-drawStart.y;
+      const t=dx*snapEdge.nx+dy*snapEdge.ny;
+      hl={x1:drawStart.x,y1:drawStart.y,x2:drawStart.x+t*snapEdge.nx,y2:drawStart.y+t*snapEdge.ny};
+    } else {
+      hl={x1:drawStart.x,y1:drawStart.y,x2:sp.x,y2:sp.y};
+    }
+    applyAngleSnap('p1');
+    render();return;
+  }
+  if(lineAct==='drag-p1'){
+    const sp=snapPt(x,y);hl.x1=sp.x;hl.y1=sp.y;
+    applyAngleSnap('p2');
+    render();return;
+  }
+  if(lineAct==='drag-p2'){
+    const sp=snapPt(x,y);hl.x2=sp.x;hl.y2=sp.y;
+    applyAngleSnap('p1');
+    render();return;
+  }
+  if(lineAct==='drag-body'){
+    const hLen=Math.hypot(hl.x2-hl.x1,hl.y2-hl.y1);
+    if(hLen>0){
+      const nx=(hl.x2-hl.x1)/hLen,ny=(hl.y2-hl.y1)/hLen;
+      const ncx=x-bodyOff.x,ncy=y-bodyOff.y;
+      hl={x1:ncx-nx*hLen/2,y1:ncy-ny*hLen/2,x2:ncx+nx*hLen/2,y2:ncy+ny*hLen/2};
+    }
+    snapEdge=null;
+    applyAngleSnap('mid');
+    render();return;
+  }
+
+  // Hover effects
+  if(scaleMode){
+    const vi=hitVertex(x,y);
+    canvas.style.cursor=vi>=0?'nwse-resize':'nwse-resize';
+    if(vi>=0) render();
+    return;
+  }
+  if(moveMode||rotMode) return;
+  if(phase==='base'&&!solved){
+    const e2=hoveredEdge(x,y);
+    const prev=hoverBase;
+    hoverBase=e2||null;
+    if(JSON.stringify(hoverBase)!==JSON.stringify(prev)) render();
+    canvas.style.cursor=e2?'pointer':'default';
+  } else if(phase==='height'&&!solved){
+    // Show snap glow
+    const prev=snapEdge;
+    snapEdge=closestSqEdge(x,y);
+    if(snapEdge!==prev) render();
+    // Cursor
+    if(hl){
+      const hit=hitLine(x,y);
+      canvas.style.cursor=hit==='p1'||hit==='p2'?'nesw-resize':hit==='body'?'move':
+        (snapEdge?'cell':'crosshair');
+    } else {
+      canvas.style.cursor=snapEdge?'cell':'crosshair';
+    }
+  }
+});
+
+canvas.addEventListener('pointerup',()=>{
+  lineAct='none';triDrag=false;triRot=false;sq.drag=false;sq.rot=false;sq.sqScale=false;
+  // Snap sq on release if 80% overlap
+  if(phase==='height' && showSetSq && sqHas80Overlap()){
+    snapSqToTarget();
+    sqPlaced=true;
+    setFb('📐 Set Square snapped! Now draw the height line from ① to ②.','fb-info');
+    render();
+  }
+  vtxScale=false; vtxScaleIdx=-1;
+  snapEdge=null;
+  if(scaleMode) canvas.style.cursor='nwse-resize';
+  else if(moveMode) canvas.style.cursor='grab';
+  else if(rotMode) canvas.style.cursor='alias';
+  else canvas.style.cursor=phase==='base'?'default':'crosshair';
+  render();
+});
+
+canvas.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
+canvas.addEventListener('touchmove', e=>e.preventDefault(),{passive:false});
+
+// ══════════════════════════════════════════════════════════════
+//  KEYBOARD
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter') checkAnswer();
+  if(e.key==='Escape') clearAll();
+  if(e.key==='g') toggleGrid();
+  if(e.key==='s') toggleSetSquare();
+  if(e.key==='n') newTriangle();
+});
+
+// ══════════════════════════════════════════════════════════════
+//  TUNES DATA  (Twinkle Twinkle Little Star — 7 phrases)
+// ══════════════════════════════════════════════════════════════
+const TUNES=[{
+  title:'Twinkle Twinkle Little Star',
+  phrases:[
+    {lyric:'Twinkle, twinkle…'},
+    {lyric:'…little star,'},
+    {lyric:'How I wonder…'},
+    {lyric:'…what you are!'},
+    {lyric:'Up above the world so high,'},
+    {lyric:'Like a diamond in the sky.'},
+    {lyric:'Twinkle, twinkle, little star! ✨'},
+  ]
+}];
+
+// ══════════════════════════════════════════════════════════════
+//  AUDIO ENGINE — fetch MP3 as blob to fix MIME type rejection
+//  raw.githubusercontent.com serves audio as octet-stream which
+//  browsers reject as audio src. Blob URL fixes this.
+// ══════════════════════════════════════════════════════════════
+const NUM_PHRASES = TUNES[0].phrases.length;
+const AUDIO_URL = 'https://raw.githubusercontent.com/mokapot77-glitch/htmlmath/main/twinkle-twinkle-little-star.mp3';
+
+const _aud = new Audio();
+let _segDur = 0;
+let _stopTimer = null;
+let _audioReady = false;
+
+// Fetch as blob → proper blob:// URL → no MIME rejection
+fetch(AUDIO_URL)
+  .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.blob(); })
+  .then(blob => {
+    const url = URL.createObjectURL(new Blob([blob], {type:'audio/mpeg'}));
+    _aud.src = url;
+    _aud.addEventListener('loadedmetadata', ()=>{
+      _segDur = _aud.duration / NUM_PHRASES;
+      _audioReady = true;
+    }, {once:true});
+    _aud.load();
+  })
+  .catch(err => console.warn('Audio fetch failed, synth active:', err));
+
+function stopAllNotes(){
+  _aud.pause();
+  if(_stopTimer){clearTimeout(_stopTimer);_stopTimer=null;}
+}
+
+function playSeq(phraseIdx, isFullTune){
+  if(!_audioReady){ _synthPlay(phraseIdx, isFullTune); return; }
+  stopAllNotes();
+  if(isFullTune){
+    _aud.currentTime = 0;
+    _aud.play().catch(()=>_synthPlay(phraseIdx, isFullTune));
+  } else {
+    const idx = Math.max(0, Math.min(phraseIdx, NUM_PHRASES-1));
+    _aud.currentTime = idx * _segDur;
+    _aud.play().catch(()=>_synthPlay(phraseIdx, isFullTune));
+    _stopTimer = setTimeout(()=>_aud.pause(), _segDur * 1000);
+  }
+}
+
+function _retryPlay(phraseIdx, isFullTune){ playSeq(phraseIdx, isFullTune); }
+
+// ── Synth fallback ──
+const _PHRASES=[
+  [{f:523,d:.3},{f:523,d:.3},{f:784,d:.3},{f:784,d:.3},{f:880,d:.3},{f:880,d:.3},{f:784,d:.55}],
+  [{f:698,d:.3},{f:698,d:.3},{f:659,d:.3},{f:659,d:.3},{f:587,d:.3},{f:587,d:.3},{f:523,d:.55}],
+  [{f:784,d:.3},{f:784,d:.3},{f:698,d:.3},{f:698,d:.3},{f:659,d:.3},{f:659,d:.3},{f:587,d:.55}],
+  [{f:784,d:.3},{f:784,d:.3},{f:698,d:.3},{f:698,d:.3},{f:659,d:.3},{f:659,d:.3},{f:587,d:.55}],
+  [{f:523,d:.3},{f:523,d:.3},{f:784,d:.3},{f:784,d:.3},{f:880,d:.3},{f:880,d:.3},{f:784,d:.55}],
+  [{f:698,d:.3},{f:698,d:.3},{f:659,d:.3},{f:659,d:.3},{f:587,d:.3},{f:587,d:.3},{f:523,d:.55}],
+];
+let _actx = null;
+function _synthPlay(phraseIdx, isFullTune){
+  if(!_actx) _actx = new(window.AudioContext||window.webkitAudioContext)();
+  const ac = _actx;
+  const notes = isFullTune ? _PHRASES.flat() : _PHRASES[Math.max(0,Math.min(phraseIdx,_PHRASES.length-1))];
+  const run = ()=>{
+    let t = ac.currentTime + 0.05;
+    notes.forEach(({f,d})=>{
+      const o=ac.createOscillator(), g=ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type='triangle';
+      o.frequency.setValueAtTime(f,t);
+      g.gain.setValueAtTime(0.3,t);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+d*0.9);
+      o.start(t); o.stop(t+d); t+=d;
+    });
+  };
+  ac.state==='running' ? run() : ac.resume().then(run).catch(()=>{});
+}
+
+
+
+// ══════════════════════════════════════════════════════════════
+//  TICKET & PROGRESS SYSTEM
+//  - Tickets earned: 1 per correct answer
+//  - Tickets spent: 1 per music button or magic piano play
+//  - Phrases unlocked sequentially (one per correct answer, any triangle type)
+// ══════════════════════════════════════════════════════════════
+
+// Cat → phase label only (not phrase index — phrases are sequential now)
+const CAT_PHRASE={right:0,acute:1,obtuse:2}; // kept for mastery modal display
+function phraseAlreadyEarned(cat){
+  // In the new system, we track how many phrases total are earned.
+  // A cat is "mastered" after the first correct answer with it.
+  return gameState.masteredCats.includes(cat);
+}
+
+function loadState(){
+  try{const raw=localStorage.getItem('heightHunterState');if(raw) return JSON.parse(raw);}catch(e){}
+  return null;
+}
+function saveState(){
+  try{localStorage.setItem('heightHunterState',JSON.stringify(gameState));}catch(e){}
+}
+
+const STATE_VERSION=4; // new per-base system
+
+// 7 buttons total:
+// 0,1,2 = right-angle (base 0, 1, 2)
+// 3,4,5 = acute       (base 0, 1, 2)
+// 6     = obtuse      (extend-base side)
+const PHRASE_DEFS=[
+  {cat:'right', baseSlot:0},
+  {cat:'right', baseSlot:1},
+  {cat:'right', baseSlot:2},
+  {cat:'acute', baseSlot:0},
+  {cat:'acute', baseSlot:1},
+  {cat:'acute', baseSlot:2},
+  {cat:'obtuse',baseSlot:'extend'},
+];
+
+let gameState={
+  version:STATE_VERSION,
+  nextPhraseIdx:0,
+  tuneComplete:false,
+  magicPianoEarned:false,
+  extendBaseUsed:false,
+  tickets:0,
+  buttons:[],
+  masteredCats:[],
+};
+
+// In-session: which base slots solved on current triangle instance
+let solvedBasesThisTri=[];
+let currentBaseEdges=[{i:0,j:1},{i:1,j:2},{i:2,j:0}];
+
+function initState(){
+  // Always start fresh — never restore from localStorage automatically.
+  // Players use the 💾 Save / 📂 Load file buttons to persist progress.
+  localStorage.removeItem('heightHunterState');
+  gameState.version=STATE_VERSION;
+  gameState.nextPhraseIdx=0;
+  gameState.tuneComplete=false;
+  gameState.magicPianoEarned=false;
+  gameState.extendBaseUsed=false;
+  gameState.tickets=0;
+  gameState.buttons=[];
+  gameState.masteredCats=[];
+}
+
+function canUseTicket(){ return gameState.tickets>0; }
+function earnTicket(){ gameState.tickets++; saveState(); updateSidebar(); }
+function useTicket(){ if(gameState.tickets>0){ gameState.tickets--; saveState(); } }
+
+// Which edge slot (0,1,2) needs extend-base for the current triangle
+function findObtuseExtendSlot(){
+  const wp=getWP();
+  for(let k=0;k<3;k++){
+    const {i,j}=currentBaseEdges[k];
+    const ax=wp[i][0],ay=wp[i][1],bx=wp[j][0],by=wp[j][1];
+    const h=computeHeight(i,j);
+    const bdx=bx-ax,bdy=by-ay,bl2=bdx*bdx+bdy*bdy;
+    if(bl2<0.001) continue;
+    const t=((h.foot[0]-ax)*bdx+(h.foot[1]-ay)*bdy)/bl2;
+    if(t<-0.01||t>1.01) return k;
+  }
+  return 0;
+}
+
+// After a correct answer, advance to next base slot or next triangle
+// Returns the next required edge {i,j} or null if cat complete
+function advanceBase(){
+  const def=PHRASE_DEFS[gameState.nextPhraseIdx];
+  if(!def) return null;
+  const nextDef=PHRASE_DEFS[gameState.nextPhraseIdx];
+  if(!nextDef || nextDef.cat!==def.cat) return null; // cat changed
+  if(nextDef.baseSlot==='extend') return null;
+  return currentBaseEdges[nextDef.baseSlot];
+}
+
+function awardNextPhrase(cat){
+  earnTicket();
+  const total=PHRASE_DEFS.length;
+  if(gameState.nextPhraseIdx>=total){ saveState(); return 'all_done'; }
+  const def=PHRASE_DEFS[gameState.nextPhraseIdx];
+  // Award next button sequentially whenever correct cat is played — any base counts
+  if(cat===def.cat){
+    const pi=gameState.nextPhraseIdx;
+    if(!gameState.buttons.includes(pi)) gameState.buttons.push(pi);
+    gameState.nextPhraseIdx++;
+    saveState();
+    checkTuneComplete();
+    return 'awarded';
+  } else {
+    // Wrong triangle type for next button — ticket earned but no button
+    saveState();
+    updateSidebar();
+    return 'wrong_cat';
+  }
+}
+
+
+async function checkWinLimitPassword(){
+  const val=document.getElementById('winLimitPwInput').value;
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(val));
+  const hex=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(hex==='eb32da077dfaf326cd6f73e0716b628da6427aa318a2d0b9fafa9ef315b5e885'){
+    document.getElementById('winLimitOverlay').style.display='none';
+    document.getElementById('winLimitPwInput').value='';
+    document.getElementById('winLimitPwError').style.display='none';
+    winCount=0; // reset win counter
+    setFb('✅ Access granted! Keep playing 🎉','fb-good');
+  } else {
+    document.getElementById('winLimitPwError').style.display='block';
+    document.getElementById('winLimitPwInput').value='';
+    document.getElementById('winLimitPwInput').focus();
+  }
+}
+
+function checkWinLimit(){
+  winCount++;
+  if(winCount>7){
+    // Pause the game and show password gate
+    document.getElementById('winLimitOverlay').style.display='flex';
+    setTimeout(()=>document.getElementById('winLimitPwInput').focus(),100);
+    return true; // blocked
+  }
+  return false;
+}
+
+function checkTuneComplete(){
+  const total=PHRASE_DEFS.length;
+  if(gameState.nextPhraseIdx>=total && !gameState.tuneComplete){
+    gameState.tuneComplete=true;
+    saveState();
+    updateSidebar();
+    // All 7 tasks complete — award magic piano immediately
+    setTimeout(()=>awardMagicPiano(),600);
+  }
+}
+
+function awardMagicPiano(){
+  gameState.magicPianoEarned=true;
+  saveState();
+  updateSidebar();
+  setTimeout(()=>showTuneComplete(0),600);
+}
+
+function showExtendBasePrompt(){
+  // No longer triggered automatically — obtuse extend is task 7, handled normally
+  document.getElementById('extendPromptOverlay').style.display='flex';
+}
+
+function nextRequiredDef(){
+  if(gameState.nextPhraseIdx>=PHRASE_DEFS.length) return null;
+  return PHRASE_DEFS[gameState.nextPhraseIdx];
+}
+
+function findButton(tuneIdx,phraseIdx){
+  return gameState.buttons.includes(phraseIdx)?{tuneIdx,phraseIdx}:null;
+}
+
+const mastered={right:false,acute:false,obtuse:false};
+
+const CAT_INFO={
+  right: {emoji:'🔵',label:'Right-angle',masteryEmoji:'🎓',
+    title:'Right-angle Triangle!',
+    level:'Mastery level: able to find the height of right-angle triangles.',
+    next:'✨ Next: try finding the height of acute triangles.'},
+  acute: {emoji:'🟢',label:'Acute',masteryEmoji:'🌟',
+    title:'Acute Triangle!',
+    level:'Mastery level: able to find the height of acute triangles.',
+    next:'✨ Next: try finding the height of obtuse triangles.'},
+  obtuse:{emoji:'🟣',label:'Obtuse',masteryEmoji:'🏆',
+    title:'Obtuse Triangle!',
+    level:'Mastery level: able to find the height of obtuse triangles.',
+    next:'✨ Amazing! You have mastered all three triangle types.'},
+};
+
+function checkMastery(cat){
+  const isFirstForCat=!gameState.masteredCats.includes(cat);
+  if(isFirstForCat) gameState.masteredCats.push(cat);
+  mastered[cat]=true;
+  const result=awardNextPhrase(cat);
+  if(result==='wrong_cat'){
+    setTimeout(()=>showNotEarnedModal(cat),400);
+  } else if(result==='all_done'){
+    setTimeout(()=>showMasteryModal(cat,isFirstForCat,false),400);
+  } else {
+    setTimeout(()=>showMasteryModal(cat,isFirstForCat,true),400);
+  }
+}
+
+function showNotEarnedModal(cat){
+  const ci=CAT_INFO[cat];
+  const btnNum=gameState.nextPhraseIdx+1;
+  const def=PHRASE_DEFS[gameState.nextPhraseIdx];
+  const required=def?def.cat:null;
+  const reqInfo=required?CAT_INFO[required]:CAT_INFO[cat];
+
+  document.getElementById('nudgeEmoji').textContent=reqInfo.emoji;
+  document.getElementById('nudgeTitle').textContent=
+    `Music Button ${btnNum} not earned — find the height of the ${reqInfo.label} triangle to earn Music Button ${btnNum}!`;
+  document.getElementById('nudgeBody').textContent=
+    `You found the height of a ${ci.label} triangle — great work! But Music Button ${btnNum} belongs to the 🎵 ${reqInfo.label} triangle. Switch to ${reqInfo.label} and find its height to unlock it. You still earned a ticket! 🎟️`;
+  document.getElementById('nudgeOverlay').style.display='flex';
+}
+
+function showMasteryModal(cat,isFirst,buttonAwarded){
+  const ci=CAT_INFO[cat];
+  const totalPhrases=PHRASE_DEFS.length;
+  const earned=Math.min(gameState.nextPhraseIdx, totalPhrases);
+  const allCollected=gameState.nextPhraseIdx>=totalPhrases;
+  const isMagicPiano=allCollected && gameState.magicPianoEarned;
+
+  document.getElementById('masteryEmoji').textContent=isMagicPiano?'🎹':ci.masteryEmoji;
+  document.getElementById('masteryTitle').textContent=isMagicPiano?'🎹 Magic Piano Earned!':'🎉 Correct!';
+  document.getElementById('masteryLevel').textContent=
+    isMagicPiano ? 'You completed all 7 triangle height challenges!' :
+    isFirst ? ci.level : `${ci.label} triangle height found — great work!`;
+  document.getElementById('masteryMusicEmoji').textContent=isMagicPiano?'🎹✨':ci.emoji+'🎵';
+
+  if(isMagicPiano){
+    document.getElementById('masteryReward').textContent='🎹 You earned the Magic Piano! Play the full Twinkle Twinkle tune!';
+    document.getElementById('masterySuggestion').textContent='🏆 All 7 heights mastered — incredible work!';
+  } else if(buttonAwarded){
+    const phraseAwarded=gameState.nextPhraseIdx-1;
+    const aIdx=Math.min(phraseAwarded,TUNES[0].phrases.length-1);
+    const phrase=TUNES[0].phrases[aIdx];
+    const isMagicBtn=(phraseAwarded===totalPhrases-1); // 7th = magic piano task
+    document.getElementById('masteryReward').textContent=
+      isMagicBtn
+        ? `🎹 Magic Piano task unlocked: ${phrase.lyric}`
+        : `Music Button ${earned}/${totalPhrases} unlocked: ${phrase.lyric}`;
+    const nextDef2=PHRASE_DEFS[earned];
+    const nextCat=nextDef2?nextDef2.cat:null;
+    const nextCatInfo=nextCat?CAT_INFO[nextCat]:null;
+    const nextSlotName=nextDef2?(nextDef2.baseSlot==='extend'?'the side extending outside':'Side '+'ABC'[nextDef2.baseSlot]):'-';
+    document.getElementById('masterySuggestion').textContent=nextCatInfo
+      ? (nextDef2.baseSlot==='extend'
+          ? `✨ Next: find the height of an obtuse triangle using Extend Base → 🎹 Magic Piano!`
+          : `✨ Next: find height from ${nextSlotName} of a ${nextCatInfo.label} triangle → Button ${earned+1}`)
+      : '🏆 All collected!';
+  } else {
+    document.getElementById('masteryReward').textContent=`You earned a ticket! 🎟️`;
+    document.getElementById('masterySuggestion').textContent=`Keep solving triangle heights to earn more tickets.`;
+  }
+
+  document.getElementById('masteryRewardMsg').textContent=
+    `You earned 1 ticket! 🎟️ Tickets now: ${gameState.tickets}`;
+  const playRow=document.getElementById('masteryPlayRow');
+  const playBtn=document.getElementById('masteryPlayBtn');
+  if(isMagicPiano){
+    playRow.style.display='block';
+    playBtn.onclick=()=>playMagicPiano();
+    playBtn.textContent=`🎹 Play Magic Piano (1🎟️)`;
+  } else if(buttonAwarded){
+    const justEarned=gameState.nextPhraseIdx-1;
+    const safeIdx=Math.max(0,justEarned);
+    playRow.style.display='block';
+    playBtn.onclick=()=>playMasteryButton(safeIdx);
+    playBtn.textContent=`▶ Play Music Button ${safeIdx+1} (1🎟️)`;
+  } else {
+    playRow.style.display='none';
+  }
+  document.getElementById('masteryOverlay').style.display='flex';
+  spawnConfetti();
+}
+
+function playMasteryButton(phraseIdx){
+  if(!canUseTicket()){
+    document.getElementById('masteryPlayBtn').textContent='🎟️ No tickets!';
+    return;
+  }
+  useTicket();
+  // Show the music player panel so the user has the "Tap to play" fallback if needed
+  const phrase=TUNES[0].phrases[Math.min(phraseIdx,TUNES[0].phrases.length-1)];
+  const ci=CAT_INFO[PHRASE_DEFS[phraseIdx]?PHRASE_DEFS[phraseIdx].cat:'right']||CAT_INFO.right;
+  document.getElementById('musicPlayerLabel').textContent=
+    `${ci.emoji}🎵 ${phrase.lyric} — 🎟️ ${gameState.tickets} ticket${gameState.tickets!==1?'s':''} left`;
+  document.getElementById('musicPlayerPanel').style.display='flex';
+  document.getElementById('masteryPlayBtn').textContent=`🎵 Playing…`;
+  setTimeout(()=>{
+    document.getElementById('masteryPlayBtn').textContent=`▶ Play Music Button ${phraseIdx+1} (1🎟️)`;
+  },4500);
+  playSeq(phraseIdx, false);
+}
+
+function closeMastery(){
+  document.getElementById('masteryOverlay').style.display='none';
+  const nextDef=nextRequiredDef();
+  if(!nextDef || gameState.tuneComplete) return;
+  if(nextDef.cat!==selectedCat){
+    // Different triangle type needed — auto-switch with instructions
+    setTimeout(()=>{
+      selectedCat=nextDef.cat;
+      spawnCatWithInstructions(nextDef.cat);
+    },400);
+  } else {
+    // Same cat — advance to next base on same or new triangle
+    setTimeout(()=>advanceToNextBase(nextDef),400);
+  }
+}
+function closeNudge(){document.getElementById('nudgeOverlay').style.display='none';}
+
+
+// ══════════════════════════════════════════════════════════════
+//  COLLECTION BOOK
+// ══════════════════════════════════════════════════════════════
+function showTuneComplete(tuneIdx){
+  const tune=TUNES[tuneIdx];
+  document.getElementById('tuneCompleteTitle').textContent='🎹✨ Congratulations!';
+  document.getElementById('tuneCompleteSubtitle').textContent='You got a Magic Piano!';
+  document.getElementById('tuneCompleteNext').textContent=
+    'Open your Collection Book to play the full tune of Twinkle Twinkle Little Star!';
+  document.getElementById('tuneCompleteOverlay').style.display='flex';
+  spawnConfetti();
+}
+function closeTuneComplete(){document.getElementById('tuneCompleteOverlay').style.display='none';}
+
+function restartGame(){
+  document.getElementById('restartOverlay').style.display='flex';
+}
+
+function confirmRestart(){
+  document.getElementById('restartOverlay').style.display='none';
+  // Reset persisted state
+  gameState.version=STATE_VERSION;
+  gameState.nextPhraseIdx=0;
+  gameState.tuneComplete=false;
+  gameState.magicPianoEarned=false;
+  gameState.extendBaseUsed=false;
+  gameState.tickets=0;
+  gameState.buttons=[];
+  gameState.masteredCats=[];
+  saveState();
+  // Reset in-memory mastered flags
+  mastered.right=false; mastered.acute=false; mastered.obtuse=false;
+  instrShownThisSession={right:false,acute:false,obtuse:false};
+  winCount=0;
+  solvedBasesThisTri=[];
+  // Close all overlays
+  ['tuneCompleteOverlay','masteryOverlay','collectionOverlay','extendPromptOverlay']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+  document.getElementById('celebOverlay').classList.remove('show');
+  selectedCat='right';
+  // Reset board
+  clearAll();
+  newTriangle();
+  updateSidebar();
+  setFb('Game restarted! Choose your mode to begin 🎮','fb-info');
+  setTimeout(()=>showModeSelect(),400);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  COLLECTION BOOK
+// ══════════════════════════════════════════════════════════════
+function openCollection(){
+  try{ renderCollection(); }
+  catch(e){
+    console.error('renderCollection error:',e);
+    // Reset state if corrupted
+    localStorage.removeItem('heightHunterState');
+    gameState={nextPhraseIdx:0,tuneComplete:false,magicPianoEarned:false,
+               tickets:0,buttons:[],masteredCats:[]};
+    renderCollection();
+  }
+  document.getElementById('collectionOverlay').style.display='flex';
+}
+function closeCollection(){
+  document.getElementById('collectionOverlay').style.display='none';
+}
+
+function renderCollection(){
+  const el=document.getElementById('collectionContent');
+  el.innerHTML='';
+
+  // ── Ticket count ──
+  const tDiv=document.createElement('div');
+  tDiv.style.cssText='background:linear-gradient(135deg,#0e2040,#091525);border:1.5px solid #f9d030;border-radius:14px;padding:10px 16px;margin-bottom:6px;display:flex;align-items:center;gap:10px;';
+  tDiv.innerHTML=`
+    <span style="font-size:1.4rem;">🎟️</span>
+    <div>
+      <div style="font-family:'Baloo 2',cursive;font-weight:800;color:#f4c842;font-size:.92rem;">Tickets: ${gameState.tickets}</div>
+      <div style="font-family:'Patrick Hand',cursive;font-size:.8rem;color:#a09880;">Earn 1 ticket for every correct answer. Spend tickets to play music buttons.</div>
+    </div>`;
+  el.appendChild(tDiv);
+
+  // ── Progress: button grid (6 music buttons + magic piano) ──
+  const musicDefs=PHRASE_DEFS.slice(0,6); // first 6 only
+  const total6=6;
+  const earned6=Math.min(gameState.nextPhraseIdx,6);
+  const pDiv=document.createElement('div');
+  pDiv.style.cssText='background:linear-gradient(135deg,#0e2040,#091525);border:1.5px solid #1e3555;border-radius:14px;padding:10px 14px;margin-bottom:6px;';
+  const btnGrid=musicDefs.map((def,i)=>{
+    const done=gameState.buttons.includes(i);
+    const isCurrent=i===gameState.nextPhraseIdx;
+    const ci=CAT_INFO[def.cat];
+    const slotLabel='ABC'[def.baseSlot]||'?';
+    const col=done?'#3de88a':isCurrent?'#f9d030':'#1e3555';
+    const textCol=done?'#051a0e':isCurrent?'#1a1000':'#5a7a9a';
+    return `<div style="text-align:center;background:${col};border-radius:8px;padding:5px 2px;min-width:36px;">
+      <div style="font-size:.7rem;font-weight:800;color:${textCol};">${ci.emoji}${slotLabel}</div>
+      <div style="font-size:.62rem;color:${textCol};opacity:.85;">Btn${i+1}</div>
+    </div>`;
+  }).join('');
+  const mpCol=gameState.magicPianoEarned?'#f9d030':(gameState.nextPhraseIdx>=6?'#f9d030':'#1e3555');
+  const mpTextCol=gameState.magicPianoEarned?'#1a1000':(gameState.nextPhraseIdx>=6?'#1a1000':'#5a7a9a');
+  const mpGrid=`<div style="text-align:center;background:${mpCol};border-radius:8px;padding:5px 2px;min-width:44px;">
+    <div style="font-size:.7rem;font-weight:800;color:${mpTextCol};">🎹</div>
+    <div style="font-size:.62rem;color:${mpTextCol};opacity:.85;">${gameState.magicPianoEarned?'Earned!':'Piano'}</div>
+  </div>`;
+  pDiv.innerHTML=`
+    <div style="font-family:'Baloo 2',cursive;font-weight:800;color:#f0ece0;font-size:.82rem;margin-bottom:8px;">
+      🎵 Progress: ${earned6}/${total6} buttons + 🎹 Magic Piano
+      <span style="font-size:.72rem;color:#5a7a9a;font-weight:400;"> · 🔵=Right 🟢=Acute · A/B/C=side</span>
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">${btnGrid}<span style="color:#2a4570;font-size:1rem;">+</span>${mpGrid}</div>
+    <div style="background:#1e3555;border-radius:8px;height:6px;overflow:hidden;margin-top:8px;">
+      <div style="background:linear-gradient(90deg,#f9d030,#3de88a);width:${Math.round(earned6/total6*100)}%;height:100%;border-radius:8px;transition:width .4s;"></div>
+    </div>`;
+  el.appendChild(pDiv);
+
+  // ── Earned music buttons (1–6 only, not the magic piano task) ──
+  const musicButtons=gameState.buttons.filter(pi=>pi<6); // only first 6
+  if(musicButtons.length>0){
+    const h=document.createElement('div');
+    h.style.cssText='font-family:"Baloo 2",cursive;font-weight:800;color:#f0ece0;font-size:.85rem;margin:4px 0 4px;';
+    h.textContent='🎵 Your Music Buttons';
+    el.appendChild(h);
+    musicButtons.forEach(pi=>{
+      const def=PHRASE_DEFS[pi];
+      const aIdx=Math.min(pi,TUNES[0].phrases.length-1);
+      const phrase=TUNES[0].phrases[aIdx];
+      const ci=def?CAT_INFO[def.cat]:CAT_INFO.right;
+      const slotLabel=def?(def.baseSlot==='extend'?'Extend-base side':'Side '+'ABC'[def.baseSlot]):'?';
+      const canPlay=canUseTicket();
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#0e2040,#091525);border:1.5px solid #1e3555;border-radius:12px;padding:8px 12px;margin-bottom:4px;';
+      row.innerHTML=`
+        <div style="flex-shrink:0;text-align:center;">
+          <div style="font-size:1rem;">${ci.emoji}🎵</div>
+          <div style="font-family:'Baloo 2',cursive;font-size:.65rem;color:#5a7a9a;font-weight:700;">Button ${pi+1}</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-family:'Baloo 2',cursive;font-size:.78rem;font-weight:800;color:${ci.emoji==='🔵'?'#5bc8ff':ci.emoji==='🟢'?'#3de88a':'#b07eff'};">${ci.label} · ${slotLabel}</div>
+          <div style="font-family:'Patrick Hand',cursive;font-size:.78rem;color:#9aacb8;">${phrase.lyric}</div>
+        </div>
+        <button class="action-btn" style="font-size:.72rem;padding:4px 10px;${!canPlay?'opacity:.45;cursor:not-allowed;background:#1e3555;color:#5a7a9a;':''}"
+          ${!canPlay?'disabled':''} onclick="playMusicButton(${pi})">▶ (1🎟️)</button>`;
+      el.appendChild(row);
+    });
+  }
+
+  // ── Magic Piano (earned when obtuse extend task completed) ──
+  if(gameState.magicPianoEarned){
+    const h=document.createElement('div');
+    h.style.cssText='font-family:"Baloo 2",cursive;font-weight:800;color:#f0ece0;font-size:.85rem;margin:6px 0 4px;';
+    h.textContent='🎹 Magic Piano';
+    el.appendChild(h);
+    const canPlay=canUseTicket();
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#0e2040,#091525);border:2px solid #f9d030;border-radius:12px;padding:8px 12px;margin-bottom:4px;box-shadow:0 0 16px rgba(249,208,48,.15);';
+    row.innerHTML=`
+      <div style="flex-shrink:0;text-align:center;">
+        <div style="font-size:1.2rem;">🎹</div>
+        <div style="font-family:'Baloo 2',cursive;font-size:.65rem;color:#f9d030;font-weight:700;">Piano</div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-family:'Baloo 2',cursive;font-size:.78rem;font-weight:800;color:#f9d030;">Full Tune — Twinkle Twinkle Little Star</div>
+        <div style="font-family:'Patrick Hand',cursive;font-size:.78rem;color:#9aacb8;">All 6 phrases from start to finish ✨</div>
+      </div>
+      <button class="action-btn" style="font-size:.72rem;padding:4px 10px;background:linear-gradient(135deg,#f9d030,#e8b800);color:#1a1000;${!canPlay?'opacity:.45;cursor:not-allowed;':''}"
+        ${!canPlay?'disabled':''} onclick="playMagicPiano()">🎹 Play (1🎟️)</button>`;
+    el.appendChild(row);
+  }
+
+  // ── No tickets warning ──
+  if(!canUseTicket()){
+    const w=document.createElement('div');
+    w.style.cssText='background:rgba(255,95,122,0.12);border:1.5px solid #ff5f7a;border-radius:12px;padding:10px 14px;margin-top:6px;font-family:"Patrick Hand",cursive;font-size:.85rem;color:#ff7a8a;';
+    w.textContent='🎟️ No tickets! Solve more triangle heights to earn tickets.';
+    el.appendChild(w);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PLAY MUSIC  (costs 1 ticket)
+// ══════════════════════════════════════════════════════════════
+function playMusicButton(phraseIdx){
+  if(!canUseTicket()){
+    document.getElementById('musicPlayerLabel').textContent='🎟️ No tickets! Solve more triangles to earn tickets.';
+    document.getElementById('musicPlayerPanel').style.display='flex';
+    return;
+  }
+  useTicket();
+  const phrase=TUNES[0].phrases[phraseIdx];
+  const cats=['right','acute','obtuse'];
+  const ci=CAT_INFO[PHRASE_DEFS[phraseIdx]?PHRASE_DEFS[phraseIdx].cat:'right']||CAT_INFO.right;
+  document.getElementById('musicPlayerLabel').textContent=`${ci.emoji}🎵 ${phrase.lyric} — 🎟️ ${gameState.tickets} ticket${gameState.tickets!==1?'s':''} left`;
+  document.getElementById('musicPlayerPanel').style.display='flex';
+  playSeq(phraseIdx, false);
+  if(document.getElementById('collectionOverlay').style.display==='flex') renderCollection();
+}
+
+function playMagicPiano(){
+  if(!canUseTicket()){
+    document.getElementById('musicPlayerLabel').textContent='🎟️ No tickets! Solve more triangles to earn tickets.';
+    document.getElementById('musicPlayerPanel').style.display='flex';
+    return;
+  }
+  useTicket();
+  const tune=TUNES[0];
+  document.getElementById('musicPlayerLabel').textContent=`🎹 ${tune.title} — full tune — 🎟️ ${gameState.tickets} ticket${gameState.tickets!==1?'s':''} left`;
+  document.getElementById('musicPlayerPanel').style.display='flex';
+  playSeq(0, true);
+  if(document.getElementById('collectionOverlay').style.display==='flex') renderCollection();
+}
+
+function hideMusicPanel(){
+  document.getElementById('musicPlayerPanel').style.display='none';
+  stopAllNotes();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CELEBRATION
+// ══════════════════════════════════════════════════════════════
+function showCeleb(){
+  const msgs=[['🌟','Nice streak!','3 in a row — you\'re getting it!'],
+              ['🔥','On fire!','6 in a row! Brilliant!'],
+              ['🏆','Legend!','9 in a row — incredible!']];
+  const idx=Math.min(Math.floor((streakCnt-1)/3),msgs.length-1);
+  document.getElementById('celebEmoji').textContent=msgs[idx][0];
+  document.getElementById('celebTitle').textContent=msgs[idx][1];
+  document.getElementById('celebMsg').textContent=msgs[idx][2];
+  document.getElementById('celebOverlay').classList.add('show');
+  spawnConfetti();
+}
+function closeCeleb(){document.getElementById('celebOverlay').classList.remove('show');}
+function spawnConfetti(){
+  const cols=['#f9d030','#5bc8ff','#3de88a','#ff5f7a','#b07eff','#ff9f43','#ffffff'];
+  const shapes=['50%','3px','0'];
+  for(let i=0;i<90;i++){
+    const el=document.createElement('div');
+    el.className='conf';
+    const size=8+Math.random()*12;
+    el.style.cssText=`
+      left:${Math.random()*100}vw;
+      top:-${size}px;
+      width:${size}px;
+      height:${size*(Math.random()>.4?0.5:1)}px;
+      background:${cols[Math.floor(Math.random()*cols.length)]};
+      border-radius:${shapes[Math.floor(Math.random()*shapes.length)]};
+      opacity:${0.85+Math.random()*0.15};
+      animation-duration:${2+Math.random()*2}s;
+      animation-delay:${Math.random()*0.8}s;
+      transform:rotate(${Math.random()*360}deg);`;
+    document.body.appendChild(el);
+    el.addEventListener('animationend',()=>el.remove());
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CHATBOT  (Rule-based helper)
+// ══════════════════════════════════════════════════════════════
+const CHAT_QA=[
+  // What is height
+  {k:['what is height','what is the height','define height','height mean','height of a triangle'],
+   a:'The <strong>height</strong> of a triangle is a straight line drawn from a corner (vertex) down to the opposite side (the base), making a perfect right angle (90°) with the base. 📐'},
+  // How to find height
+  {k:['how to find','how do i find','how do you find','how to draw','how do i draw','how to get height'],
+   a:'To find the height: ① click a side of the triangle to choose it as the base, ② draw a straight line from the opposite vertex to the base, making sure it is at exactly 90°. Use the <strong>Set Square</strong> tool to help! 📐'},
+  // Right angle triangle
+  {k:['right angle','right-angle','right triangle','right angled'],
+   a:'For a <strong>right-angle triangle</strong>, one of the legs is already a height! Pick the long side (hypotenuse) as the base, and the opposite vertex drops straight down to meet it at 90°. 🔵'},
+  // Acute triangle
+  {k:['acute','acute triangle'],
+   a:'For an <strong>acute triangle</strong>, all angles are less than 90°. The height always lands <em>inside</em> the base segment — no extending needed. Pick any base and draw your perpendicular line down from the opposite vertex. 🟢'},
+  // Obtuse triangle
+  {k:['obtuse','obtuse triangle'],
+   a:'For an <strong>obtuse triangle</strong>, one angle is bigger than 90°. When you pick certain bases, the height falls <em>outside</em> the triangle — you need to use the <strong>Extend Base</strong> button to see the full base line and then draw your height to it. 🟣'},
+  // Set square
+  {k:['set square','setsquare','square tool','how to use set square','set square help'],
+   a:'The <strong>Set Square</strong> is a triangle-shaped tool that helps you draw a perfect 90° line. Turn it on with the 📐 button, slide it so one edge lines up with the base, then draw your height line along the other edge. Your line will snap to exactly 90°!'},
+  // Extend base
+  {k:['extend base','extension','extend','base extension','dashed line'],
+   a:'The <strong>Extend Base</strong> button (⟵⟶) shows dashed lines stretching the base beyond the triangle edges. You need this for obtuse triangles where the height lands outside the triangle. Turn it on before drawing your height line.'},
+  // Perpendicular
+  {k:['perpendicular','90 degree','90°','right angle line','90 degrees'],
+   a:'<strong>Perpendicular</strong> means the height line must meet the base at exactly 90° (a right angle). When your line snaps, you will see a small square box appear at the corner — that means it\'s perfectly perpendicular! ✅'},
+  // Snap
+  {k:['snap','snapped','angle snap','snapping'],
+   a:'When your line is very close to 90°, it <strong>snaps</strong> automatically to exactly the right angle and a green square box appears at the foot. That means you\'ve got the direction right! 🟩'},
+  // Check answer
+  {k:['check','check answer','how to check','submit','verify'],
+   a:'Once you have drawn your height line, press the <strong>✓ Check!</strong> button to see if it is correct. The line must be at 90° to the base, the right length, and touch the base (or its extension). 💡'},
+  // Music buttons
+  {k:['music button','music buttons','what are music buttons','earn music'],
+   a:'<strong>Music Buttons</strong> play parts of Twinkle Twinkle Little Star! 🎵 Buttons 1 & 2 = 🔵 Right-angle, Buttons 3 & 4 = 🟢 Acute, Buttons 5 & 6 = 🟣 Obtuse. Solve the matching triangle type to earn each button!'},
+  // Tickets
+  {k:['ticket','tickets','earn ticket','what is a ticket'],
+   a:'You earn <strong>1 ticket</strong> for every correct answer! 🎟️ Use tickets to play your music buttons in the Collection Book. The more triangles you solve, the more music you can play!'},
+  // Collection book
+  {k:['collection','book','collection book','music collection'],
+   a:'The <strong>📚 Collection Book</strong> shows all your earned music buttons and tickets. Tap ▶ Play (costs 1 ticket) to hear any phrase you\'ve unlocked. Once you collect all 6 buttons, you can earn the Magic Piano!'},
+  // Magic piano
+  {k:['magic piano','piano','full tune','magic'],
+   a:'The <strong>🎹 Magic Piano</strong> plays the whole Twinkle Twinkle tune from start to finish! To earn it, collect all 6 music buttons, then complete a special challenge: find the height of an obtuse triangle using the Extend Base button.'},
+  // Extend base challenge
+  {k:['extend base challenge','extend challenge','how to get piano','unlock piano','earn piano'],
+   a:'After collecting all 6 music buttons, an <strong>Extend Base Challenge</strong> unlocks! 🎯 You must: pick a base whose height falls <em>outside</em> the triangle, turn on ⟵⟶ Extend Base, then draw the correct height touching the extended line. Get it right to earn the Magic Piano!'},
+  // How to play
+  {k:['how to play','how do i play','rules','instructions','start','begin','getting started'],
+   a:'Here\'s how to play: ① Choose a triangle type (Right-angle, Acute, or Obtuse), ② click a side of the triangle to set the base, ③ draw a height line from the opposite vertex to the base at 90°, ④ press <strong>✓ Check!</strong>. Correct answers earn tickets and music buttons! 🎮'},
+  // Move rotate resize
+  {k:['move','rotate','resize','scale','how to move','how to rotate','how to resize'],
+   a:'Use the toolbar buttons to adjust the triangle: <strong>✋ Move</strong> to drag it around, <strong>🔄 Rotate</strong> to spin it, <strong>⤡ Resize</strong> to make it bigger or smaller. This helps you see it better on screen!'},
+  // Streak
+  {k:['streak','on fire','3 in a row','bonus'],
+   a:'A <strong>streak</strong> means you got multiple correct answers in a row! 🔥 Get 3 in a row and a celebration appears. Keep going to build your streak higher!'},
+  // Restart
+  {k:['restart','reset game','start over','new game'],
+   a:'Press the <strong>🔄 Restart</strong> button at the bottom to start the game fresh. This resets all your tickets, music buttons, and progress — so you can earn the Magic Piano all over again!'},
+  // Next button
+  {k:['next','next triangle','new triangle','different triangle'],
+   a:'After you solve a triangle correctly, press the <strong>Next ▶</strong> button to get a new triangle. You can also press <strong>🔀 New</strong> at any time to get a fresh triangle.'},
+  // Hint
+  {k:['hint','help me','stuck','i\'m stuck','i am stuck','don\'t know','dont know'],
+   a:'Here are some tips: 💡 Use the <strong>📐 Set Square</strong> to draw a perfect right angle. For obtuse triangles, use <strong>⟵⟶ Extend Base</strong>. Make sure one end of your height line touches the base. Press <strong>✓ Check!</strong> to see if you\'re right!'},
+  // Good job / encouragement
+  {k:['thank','thanks','great','awesome','good','well done','yay'],
+   a:'You\'re welcome! 🌟 Keep going — you\'re doing great! Every correct answer earns you a ticket and brings you closer to the Magic Piano. You\'ve got this! 💪'},
+];
+
+function getBotReply(input){
+  const q=input.toLowerCase().trim();
+  for(const qa of CHAT_QA){
+    if(qa.k.some(kw=>q.includes(kw))) return qa.a;
+  }
+  // Fallback
+  return "I\'m not sure about that one! 🤔 Try asking about: <em>how to find the height</em>, <em>right-angle / acute / obtuse triangles</em>, <em>set square</em>, <em>extend base</em>, <em>music buttons</em>, <em>tickets</em>, or <em>magic piano</em>.";
+}
+
+function openChatbot(){
+  document.getElementById('chatbotOverlay').style.display='flex';
+  if(!document.getElementById('chatMessages').hasChildNodes()){
+    appendBotMsg("Hi! 👋 I\'m your Height Hunter helper! Try asking me: <em>How do I find the height?</em> or <em>What are music buttons?</em> or <em>How do I use the set square?</em>");
+  }
+  setTimeout(()=>document.getElementById('chatInput').focus(),100);
+}
+function closeChatbot(){
+  document.getElementById('chatbotOverlay').style.display='none';
+}
+
+function appendBotMsg(text){
+  const el=document.getElementById('chatMessages');
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:flex-start;';
+  row.innerHTML=`
+    <div style="font-size:1.4rem;flex-shrink:0;margin-top:2px;">🤖</div>
+    <div style="background:#192333;border:1.5px solid #c084fc;border-radius:4px 16px 16px 16px;
+      padding:10px 14px;font-family:'Patrick Hand',cursive;font-size:1rem;color:#f0ece0;
+      line-height:1.5;max-width:85%;">${text}</div>`;
+  el.appendChild(row);
+  el.scrollTop=el.scrollHeight;
+}
+
+function appendUserMsg(text){
+  const el=document.getElementById('chatMessages');
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:flex-start;justify-content:flex-end;';
+  row.innerHTML=`
+    <div style="background:#2e4060;border-radius:16px 4px 16px 16px;
+      padding:10px 14px;font-family:'Patrick Hand',cursive;font-size:1rem;color:#f0ece0;
+      line-height:1.5;max-width:85%;">${text}</div>
+    <div style="font-size:1.4rem;flex-shrink:0;margin-top:2px;">🧑‍🎓</div>`;
+  el.appendChild(row);
+  el.scrollTop=el.scrollHeight;
+}
+
+function sendChat(){
+  const input=document.getElementById('chatInput');
+  const text=input.value.trim();
+  if(!text) return;
+  input.value='';
+  appendUserMsg(text);
+  // Small delay to feel natural
+  setTimeout(()=>appendBotMsg(getBotReply(text)),350);
+}
+
+
+// ══════════════════════════════════════════════════════════════
+//  MODE NAV BAR — editable links
+// ══════════════════════════════════════════════════════════════
+const NAV_DEFAULTS={
+  right:'height_hunter_right.html',
+  acute:'height_hunter_acute.html',
+  obtuse:'height_hunter_obtuse.html'
+};
+
+function getNavLinks(){
+  try{
+    const saved=localStorage.getItem('heightHunterNavLinks');
+    if(saved) return Object.assign({},NAV_DEFAULTS,JSON.parse(saved));
+  }catch(e){}
+  return Object.assign({},NAV_DEFAULTS);
+}
+function saveNavLinks(links){
+  try{ localStorage.setItem('heightHunterNavLinks',JSON.stringify(links)); }catch(e){}
+}
+
+function buildNavBar(activeCat){
+  const links=getNavLinks();
+  const cats=[
+    {cat:'right', label:'🔵 Right-angle', col:'#5bc8ff'},
+    {cat:'acute', label:'🟢 Acute',        col:'#3de88a'},
+    {cat:'obtuse',label:'🟣 Obtuse',       col:'#b07eff'},
+  ];
+  const bar=document.getElementById('modeNavBar');
+  if(!bar) return;
+  bar.innerHTML='';
+
+  // Title
+  const title=document.createElement('span');
+  title.style.cssText="font-family:'Baloo 2',cursive;font-size:.9rem;font-weight:800;color:#f9d030;margin-right:4px;white-space:nowrap;";
+  title.textContent='📂 Mode:';
+  bar.appendChild(title);
+
+  // Mode buttons
+  cats.forEach(({cat,label,col})=>{
+    if(cat===activeCat){
+      const el=document.createElement('span');
+      el.style.cssText=`background:${col}22;border:2px solid ${col};color:${col};border-radius:20px;padding:5px 16px;font-size:.85rem;font-weight:800;white-space:nowrap;`;
+      el.textContent=label;
+      bar.appendChild(el);
+    } else {
+      const el=document.createElement('button');
+      el.style.cssText='background:#0e2040;border:1.5px solid #1e3555;color:#9aacb8;border-radius:20px;padding:5px 16px;font-size:.85rem;font-weight:800;text-decoration:none;white-space:nowrap;cursor:pointer;transition:all .18s;';
+      el.textContent=label;
+      el.onmouseover=()=>{ el.style.borderColor=col; el.style.color=col; };
+      el.onmouseout=()=>{ el.style.borderColor='#1e3555'; el.style.color='#9aacb8'; };
+      if(typeof FULL_GAME!=='undefined' && FULL_GAME){
+        // Full game — switch triangle type in-place
+        el.onclick=()=>spawnCatWithInstructions(cat);
+      } else {
+        // Specialised file — navigate to linked file
+        const url=links[cat]||NAV_DEFAULTS[cat];
+        el.onclick=()=>{ window.location.href=url; };
+      }
+      bar.appendChild(el);
+    }
+  });
+
+  // Spacer
+  const sp=document.createElement('span');sp.style.flex='1';bar.appendChild(sp);
+
+  // Settings gear button
+  const gear=document.createElement('button');
+  gear.textContent='⚙️';
+  gear.title='Set mode links';
+  gear.style.cssText='background:none;border:none;font-size:1.1rem;cursor:pointer;padding:2px 4px;opacity:.7;transition:opacity .2s;';
+  gear.onmouseover=()=>gear.style.opacity='1';
+  gear.onmouseout=()=>gear.style.opacity='.7';
+  gear.onclick=openNavSettings;
+  bar.appendChild(gear);
+}
+
+function openNavSettings(){
+  // Show password prompt first
+  document.getElementById('navPwOverlay').style.display='flex';
+  document.getElementById('navPwInput').value='';
+  document.getElementById('navPwError').style.display='none';
+  setTimeout(()=>document.getElementById('navPwInput').focus(),100);
+}
+
+async function checkNavPassword(){
+  const val=document.getElementById('navPwInput').value;
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(val));
+  const hex=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(hex==='eb32da077dfaf326cd6f73e0716b628da6427aa318a2d0b9fafa9ef315b5e885'){
+    document.getElementById('navPwOverlay').style.display='none';
+    const links=getNavLinks();
+    document.getElementById('navLinkRight').value=links.right||'';
+    document.getElementById('navLinkAcute').value=links.acute||'';
+    document.getElementById('navLinkObtuse').value=links.obtuse||'';
+    document.getElementById('navSettingsOverlay').style.display='flex';
+  } else {
+    document.getElementById('navPwError').style.display='block';
+    document.getElementById('navPwInput').value='';
+    document.getElementById('navPwInput').focus();
+  }
+}
+
+function closeNavPassword(){ document.getElementById('navPwOverlay').style.display='none'; }
+function closeNavSettings(){ document.getElementById('navSettingsOverlay').style.display='none'; }
+function saveNavSettings(){
+  const links={
+    right: document.getElementById('navLinkRight').value.trim()||NAV_DEFAULTS.right,
+    acute: document.getElementById('navLinkAcute').value.trim()||NAV_DEFAULTS.acute,
+    obtuse:document.getElementById('navLinkObtuse').value.trim()||NAV_DEFAULTS.obtuse,
+  };
+  saveNavLinks(links);
+  buildNavBar(NAV_ACTIVE_CAT);
+  closeNavSettings();
+}
+
+const NAV_ACTIVE_CAT=selectedCat;
+
+
+
+// ══════════════════════════════════════════════════════════════
+//  LOCAL SAVE / LOAD / EMAIL PROGRESS
+// ══════════════════════════════════════════════════════════════
+function validateRegNum(val){
+  const n=parseInt(val,10);
+  return Number.isInteger(n)&&n>=1&&n<=42;
+}
+
+
+function openSavePopover(){
+  const pop=document.getElementById('savePopover');
+  pop.style.display=pop.style.display==='flex'?'none':'flex';
+  if(pop.style.display==='flex'){
+    document.getElementById('saveRegInput').value='';
+    setTimeout(()=>document.getElementById('saveRegInput').focus(),50);
+  }
+}
+function closeSavePopover(){
+  document.getElementById('savePopover').style.display='none';
+}
+function confirmSave(){
+  const raw=document.getElementById('saveRegInput').value;
+  if(!validateRegNum(raw)){
+    document.getElementById('saveRegInput').style.borderColor='#ff5f7a';
+    setTimeout(()=>document.getElementById('saveRegInput').style.borderColor='#2a4570',1000);
+    return;
+  }
+  closeSavePopover();
+  const regNum=parseInt(raw,10);
+  const data=JSON.stringify({
+    version:STATE_VERSION, regNum, savedAt:new Date().toISOString(), state:gameState
+  }, null, 2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=regNum+'.json'; a.style.display='none';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },300);
+  setFb('💾 Progress saved as '+regNum+'.json!','fb-info');
+  showProgressCard(regNum,'saved');
+}
+
+function loadProgress(){
+  const input=document.createElement('input');
+  input.type='file'; input.accept='.json';
+  input.onchange=e=>{
+    const file=e.target.files[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(!data.state){ alert('Invalid progress file.'); return; }
+        Object.assign(gameState, data.state);
+        // Sync level display from loaded state
+        level = Math.max(1, gameState.buttons.length);
+        document.getElementById('levelNum').textContent=level;
+        saveState(); updateSidebar();
+        setFb('📂 Progress loaded for register #'+(data.regNum||'?')+'!','fb-info');
+        showProgressCard(data.regNum||'?','loaded');
+      }catch(err){ alert('Could not read file: '+err.message); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function closeProgressCard(){
+  document.getElementById('progressCardOverlay').style.display='none';
+}
+
+function showProgressCard(regNum, mode){
+  const cv=document.getElementById('progressCardCanvas');
+  const c=cv.getContext('2d');
+  const CW=520, CH=360;
+  cv.width=CW; cv.height=CH;
+
+  // Background
+  const bg=c.createLinearGradient(0,0,0,CH);
+  bg.addColorStop(0,'#0e2040'); bg.addColorStop(1,'#091525');
+  c.fillStyle=bg; c.fillRect(0,0,CW,CH);
+
+  // Border
+  c.save(); c.shadowColor='rgba(91,200,255,0.5)'; c.shadowBlur=20;
+  c.strokeStyle='#5bc8ff'; c.lineWidth=2.5;
+  _pcRoundRect(c,6,6,CW-12,CH-12,16); c.stroke(); c.restore();
+
+  // Header
+  const headerColor = mode==='saved' ? '#5bc8ff' : '#3de88a';
+  const headerIcon  = mode==='saved' ? '💾' : '📂';
+  const headerText  = mode==='saved'
+    ? headerIcon+' Progress Saved — Register #'+regNum
+    : headerIcon+' Progress Loaded — Register #'+regNum;
+  c.fillStyle=headerColor;
+  c.font='bold 22px sans-serif';
+  c.textAlign='center';
+  c.fillText(headerText, CW/2, 44);
+
+  // Date
+  c.fillStyle='#9aacb8'; c.font='14px sans-serif';
+  c.fillText(new Date().toLocaleString(), CW/2, 68);
+
+  // Divider
+  c.strokeStyle='rgba(91,200,255,0.25)'; c.lineWidth=1;
+  c.beginPath(); c.moveTo(36,82); c.lineTo(CW-36,82); c.stroke();
+
+  // Level & Tickets row
+  const derivedLevel = Math.max(1, gameState.buttons.length);
+  _pcStatBox(c, 36,  92, 100, 58, 'Level',   String(derivedLevel),  '#f9d030', 'rgba(249,208,48,.12)');
+  _pcStatBox(c, 148, 92, 100, 58, '🎫 Tickets', String(gameState.tickets), '#f9d030', 'rgba(249,208,48,.10)');
+  const mpE=gameState.magicPianoEarned;
+  _pcStatBox(c, 260, 92, 130, 58, '🎹 Magic Piano', mpE?'Earned!':'Not yet',
+    mpE?'#3de88a':'#4a6a8a', mpE?'rgba(61,232,138,.12)':'rgba(30,53,85,.5)');
+  const cats=gameState.masteredCats||[];
+  const catStr=cats.length ? cats.map(s=>s[0].toUpperCase()+s.slice(1)).join(', ') : 'None yet';
+  _pcStatBox(c, 400, 92, 86, 58, '🎓 Mastered', catStr, '#b07eff', 'rgba(176,126,255,.12)');
+
+  // Buttons row label
+  const total=PHRASE_DEFS.length, earned=gameState.buttons.length;
+  c.fillStyle='#f0ece0'; c.font='bold 13px sans-serif'; c.textAlign='left';
+  c.fillText('Music Buttons ('+earned+'/'+total+'):', 36, 172);
+
+  // Button tiles
+  const btnColors=['#5bc8ff','#5bc8ff','#5bc8ff','#3de88a','#3de88a','#3de88a','#b07eff'];
+  const bW=58, bH=36, bGap=7, bY=180;
+  for(let i=0;i<total;i++){
+    const bx=36+i*(bW+bGap);
+    const unlocked=gameState.buttons.includes(i);
+    c.save();
+    c.shadowColor=unlocked?btnColors[i]:'transparent'; c.shadowBlur=unlocked?8:0;
+    c.fillStyle=unlocked?btnColors[i]:'#1e3555';
+    _pcRoundRect(c,bx,bY,bW,bH,8); c.fill(); c.restore();
+    c.fillStyle=unlocked?'#051020':'#3a5a7a';
+    c.font='bold '+(unlocked?'16':'13')+'px sans-serif'; c.textAlign='center';
+    c.fillText(unlocked?'✓':'?', bx+bW/2, bY+bH/2+5);
+  }
+
+  // Tune progress bar
+  const tuneY=238;
+  c.fillStyle='#9aacb8'; c.font='13px sans-serif'; c.textAlign='left';
+  c.fillText('Tune progress:', 36, tuneY);
+  const barX=36, barW=CW-72, barH=14, barY=tuneY+8;
+  c.fillStyle='#1e3555'; _pcRoundRect(c,barX,barY,barW,barH,7); c.fill();
+  const pct=Math.min(1, gameState.nextPhraseIdx/total);
+  if(pct>0){
+    const fg=c.createLinearGradient(barX,0,barX+barW,0);
+    fg.addColorStop(0,'#5bc8ff'); fg.addColorStop(1,'#3de88a');
+    c.fillStyle=fg; _pcRoundRect(c,barX,barY,barW*pct,barH,7); c.fill();
+  }
+  c.fillStyle='#f0ece0'; c.font='bold 11px sans-serif'; c.textAlign='center';
+  c.fillText(gameState.tuneComplete
+    ? '✨ Complete!'
+    : gameState.nextPhraseIdx+'/'+total+' phrases',
+    barX+barW/2, barY+barH/2+4);
+
+  // Cat breakdown
+  const catDefY=278;
+  const catDefs=[
+    {label:'🔵 Right-angle',indices:[0,1,2]},
+    {label:'🟢 Acute',      indices:[3,4,5]},
+    {label:'🟣 Obtuse',     indices:[6]},
+  ];
+  const colW=(CW-72)/3;
+  catDefs.forEach((cd,ci)=>{
+    const cx2=36+ci*colW+colW/2;
+    const done=cd.indices.filter(i=>gameState.buttons.includes(i)).length;
+    const tot2=cd.indices.length;
+    c.fillStyle=done===tot2?'#3de88a':'#9aacb8';
+    c.font='bold 12px sans-serif'; c.textAlign='center';
+    c.fillText(cd.label+' '+done+'/'+tot2, cx2, catDefY);
+  });
+
+  // Footer
+  c.fillStyle='rgba(150,170,190,.45)'; c.font='11px sans-serif'; c.textAlign='center';
+  c.fillText('Height Hunter — triangle heights practice', CW/2, CH-12);
+
+  document.getElementById('progressCardOverlay').style.display='flex';
+}
+
+function _pcRoundRect(c,x,y,w,h,r){
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y); c.closePath();
+}
+
+function _pcStatBox(c,x,y,w,h,label,value,valColor,bgColor){
+  c.save();
+  c.fillStyle=bgColor; _pcRoundRect(c,x,y,w,h,9); c.fill();
+  c.strokeStyle=valColor; c.lineWidth=1.2; c.globalAlpha=0.5;
+  _pcRoundRect(c,x,y,w,h,9); c.stroke(); c.globalAlpha=1;
+  c.fillStyle='#9aacb8'; c.font='10px sans-serif'; c.textAlign='center';
+  c.fillText(label, x+w/2, y+16);
+  c.fillStyle=valColor; c.font='bold 15px sans-serif';
+  c.fillText(value, x+w/2, y+42);
+  c.restore();
+}
+
+// Close save popover when clicking outside it
+document.addEventListener('click', e=>{
+  const pop=document.getElementById('savePopover');
+  const btn=document.getElementById('saveBtn');
+  if(pop && pop.style.display==='flex' && !pop.contains(e.target) && e.target!==btn){
+    pop.style.display='none';
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════════════
+function resize(){
+  const wrap=document.getElementById('canvasWrap');
+  W=wrap.clientWidth;H=wrap.clientHeight;
+  canvas.width=W;canvas.height=H;
+  tri.cx=W/2;tri.cy=H/2;
+  if(!tri.pts.length) newTriangle();
+  else render();
+}
+window.addEventListener('resize',resize);
+initState();
+resize();
+const FULL_GAME=true; // full game — mode buttons switch in-place without navigation
+buildNavBar(selectedCat);
+updateSidebar();
+// Show mode selection overlay first, then instructions
+setTimeout(()=>showModeSelect(),400);
+</script>
+</body>
+</html>
