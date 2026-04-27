@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triangle Base & Height Explorer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fdf6e3;
+  --sand:#e8d5a3;--sand2:#d4b97a;
+  --amber:#c8860a;--amber2:#e8a020;--amber-lt:#fff8e6;
+  --green:#1e6e30;--green2:#28a044;--green-lt:#d6f0dc;
+  --blue:#1a4fa0;--blue2:#2470cc;--blue-lt:#daeaf8;
+  --red:#a01818;--red2:#e02020;--red-lt:#fde6e6;
+  --ink:#2e2010;--ink2:#5a4020;--ink3:#8a6840;
+  --r:10px;--rl:16px;
+  --f:'Baloo 2',cursive;--f2:'Nunito',sans-serif;
+}
+body{font-family:var(--f);background:var(--bg);min-height:100vh;padding:1rem 1rem 3rem;color:var(--ink);}
+.wrap{max-width:960px;margin:0 auto;}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding:.6rem 1rem;background:white;border-radius:var(--rl);border:1.5px solid var(--sand);box-shadow:0 2px 8px rgba(0,0,0,.07);}
+.hdr-title{font-size:1.05rem;font-weight:800;color:var(--ink);}
+.steps{display:flex;align-items:center;gap:.3rem;}
+.sd{width:30px;height:30px;border-radius:50%;background:var(--sand);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:var(--ink3);transition:all .35s;}
+.sd.active{background:var(--blue2);color:white;box-shadow:0 0 0 3px var(--blue-lt);}
+.sd.done{background:var(--green2);color:white;}
+.sl{width:22px;height:2px;background:var(--sand);border-radius:2px;transition:background .35s;}
+.sl.done{background:var(--green2);}
+
+/* MYSTERY */
+.mystery-wrap{background:white;border-radius:var(--rl);border:1.5px solid var(--sand);padding:1rem 1.2rem;margin-bottom:.85rem;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.mystery-lbl{font-size:.72rem;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;font-family:var(--f2);}
+.mystery-wrap canvas{display:block;border-radius:var(--r);border:2px solid var(--sand2);margin:0 auto;}
+.mystery-status{text-align:center;font-size:.78rem;color:var(--ink3);margin-top:.5rem;font-family:var(--f2);}
+
+/* CARD */
+.card{background:white;border-radius:var(--rl);border:1.5px solid var(--sand);padding:1.1rem 1.2rem;margin-bottom:.85rem;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.qnum{display:inline-block;font-size:.68rem;font-weight:700;background:var(--amber2);color:white;padding:2px 10px;border-radius:20px;margin-bottom:.3rem;letter-spacing:.05em;text-transform:uppercase;}
+.qtitle{font-size:1rem;font-weight:700;color:var(--ink);margin-bottom:.3rem;line-height:1.4;}
+.qinst{font-size:.84rem;color:var(--ink2);line-height:1.7;margin-bottom:.5rem;font-family:var(--f2);}
+.qinst strong{color:var(--ink);font-weight:700;}
+.tip{display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;background:var(--blue-lt);color:var(--blue);padding:3px 11px;border-radius:20px;margin-bottom:.55rem;font-weight:600;border:1px solid #b3d0ef;font-family:var(--f2);}
+
+/* CANVAS */
+.cwrap{position:relative;margin-bottom:.75rem;}
+canvas.mc{display:block;width:100%;touch-action:none;border:1.5px solid var(--sand);border-radius:var(--r);background:var(--bg);}
+
+/* vote overlay removed */
+
+/* VOTE QUESTION PANEL — prominent below canvas */
+.vote-panel{background:var(--amber-lt);border:2px solid var(--amber2);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:.75rem;}
+.vote-q{font-size:1.15rem;font-weight:800;color:var(--ink);margin-bottom:.6rem;line-height:1.4;}
+.vote-q em{color:var(--amber);font-style:normal;}
+.vote-btns-row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;}
+.vote-big-btn{display:flex;align-items:center;gap:.4rem;padding:.5rem 1.2rem;border-radius:var(--r);border:2.5px solid;font-size:.95rem;font-weight:800;font-family:var(--f);cursor:pointer;transition:all .18s;background:white;}
+.vote-big-btn.tick{border-color:var(--green2);color:var(--green2);}
+.vote-big-btn.tick:hover,.vote-big-btn.tick.sel{background:var(--green2);color:white;}
+.vote-big-btn.cross{border-color:var(--red2);color:var(--red2);}
+.vote-big-btn.cross:hover,.vote-big-btn.cross.sel{background:var(--red2);color:white;}
+.vote-hint{font-size:.78rem;color:var(--ink3);font-family:var(--f2);margin-left:.25rem;}
+
+.vote-legend{display:inline-block;font-size:.78rem;color:var(--ink2);font-family:var(--f2);margin-bottom:.6rem;background:var(--sand);padding:.38rem .75rem;border-radius:var(--r);}
+.vote-legend span.t{color:var(--green);font-weight:700;}
+.vote-legend span.x{color:var(--red);font-weight:700;}
+
+/* GATE */
+.gate{display:none;margin:.6rem 0;padding:.65rem .9rem;border-radius:var(--r);background:#fff8e1;border:1.5px dashed var(--amber2);font-size:.84rem;color:#7a5800;font-family:var(--f2);font-weight:600;line-height:1.65;}
+.gate.show{display:block;}
+
+/* CONTROLS */
+.controls-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap;}
+.ctrl-btn{background:var(--sand);color:var(--ink2);border:1.5px solid var(--sand2);padding:.35rem .85rem;border-radius:var(--r);font-size:.8rem;font-weight:700;font-family:var(--f);cursor:pointer;transition:all .15s;}
+.ctrl-btn:hover{background:var(--sand2);}
+.ctrl-btn.on{background:var(--amber2);color:white;border-color:var(--amber);}
+.ctrl-hint{font-size:.77rem;color:var(--ink3);font-family:var(--f2);}
+.btn-reset{background:white;color:var(--ink3);border:1.5px solid var(--sand2);padding:.32rem .75rem;border-radius:var(--r);font-size:.78rem;font-weight:600;font-family:var(--f2);cursor:pointer;}
+.btn-reset:hover{background:var(--sand);}
+
+textarea{width:100%;padding:.55rem .85rem;border:1.5px solid var(--sand);border-radius:var(--r);font-size:.9rem;font-family:var(--f2);color:var(--ink);background:white;resize:none;height:64px;outline:none;transition:border-color .2s;margin-top:.5rem;}
+textarea:focus{border-color:var(--blue2);box-shadow:0 0 0 3px rgba(36,112,204,.1);}
+
+.btn-row{display:flex;gap:.5rem;align-items:center;margin-top:.5rem;flex-wrap:wrap;}
+.btn-chk{background:var(--blue2);color:white;border:none;padding:.48rem 1.2rem;border-radius:var(--r);font-size:.9rem;font-weight:700;font-family:var(--f);cursor:pointer;}
+.btn-chk:hover{background:var(--blue);}
+.btn-hnt{background:var(--amber-lt);color:var(--amber);border:1.5px solid var(--sand2);padding:.42rem .9rem;border-radius:var(--r);font-size:.82rem;font-weight:700;font-family:var(--f);cursor:pointer;}
+.btn-nxt{display:none;background:var(--green2);color:white;border:none;padding:.5rem 1.25rem;border-radius:var(--r);font-size:.9rem;font-weight:700;font-family:var(--f);cursor:pointer;margin-top:.5rem;}
+.btn-nxt:hover{background:var(--green);}
+
+.fb{display:none;margin-top:.65rem;padding:.65rem .95rem;border-radius:var(--r);font-size:.85rem;line-height:1.75;font-family:var(--f2);font-weight:500;}
+.fb.ok{display:block;background:var(--green-lt);color:var(--green);border-left:3px solid var(--green2);}
+.fb.no{display:block;background:var(--red-lt);color:var(--red);border-left:3px solid #e84040;}
+.fb.ht{display:block;background:var(--blue-lt);color:var(--blue);border-left:3px solid var(--blue2);}
+
+.ss-gate{display:none;padding:.65rem .9rem;border-radius:var(--r);background:#e8f4e8;border:1.5px solid var(--green2);font-size:.84rem;font-family:var(--f2);font-weight:600;color:var(--green);margin:.5rem 0;}
+.ss-gate.show{display:block;}
+
+.complete{display:none;text-align:center;padding:1.25rem .5rem;}
+.complete h2{font-size:1.2rem;font-weight:800;color:var(--ink);margin-bottom:.3rem;}
+.complete p{font-size:.875rem;color:var(--ink2);margin-bottom:.75rem;font-family:var(--f2);}
+.summary{background:var(--amber-lt);border-radius:var(--r);border:1.5px solid var(--sand2);padding:.85rem 1rem;text-align:left;margin-top:.75rem;}
+.summary h3{font-size:.8rem;font-weight:700;color:var(--ink);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em;}
+.sum-item{font-size:.83rem;color:var(--ink2);line-height:1.65;padding-left:.85rem;position:relative;margin-bottom:.2rem;font-family:var(--f2);}
+.sum-item::before{content:'▸';position:absolute;left:0;color:var(--amber2);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hdr">
+  <div class="hdr-title">🔺 Triangle Base &amp; Height Explorer</div>
+  <div class="steps">
+    <div class="sd active" id="sd0">1</div><div class="sl" id="sl01"></div>
+    <div class="sd" id="sd1">2</div><div class="sl" id="sl12"></div>
+    <div class="sd" id="sd2">3</div>
+  </div>
+</div>
+
+<!-- MYSTERY -->
+<div class="mystery-wrap">
+  <div class="mystery-lbl">🏛️ Mystery Picture — answer correctly to reveal it!</div>
+  <canvas id="mysCvs" width="420" height="220"></canvas>
+  <div class="mystery-status" id="mysStatus">Answer a question correctly to reveal part of the picture…</div>
+</div>
+
+<!-- ══ Q1 ══ -->
+<div id="s1">
+  <div class="card">
+    <div class="qnum">Question 1</div>
+    <div class="qtitle">What can you say about the base of a triangle?</div>
+    <div class="qinst">Three identical right-angle triangles are shown, each with a different side that could be the base. Answer each question below, then <strong>drag and rotate</strong> the triangles to explore — try overlapping them!</div>
+    <div class="tip">🖱️ Drag body to move &nbsp;·&nbsp; ↻ handle to rotate</div>
+
+    <!-- CANVAS — shows only the currently active triangle prominently -->
+    <div class="cwrap" id="cWrap1">
+      <canvas id="c1" class="mc" width="1200" height="920"></canvas>
+
+    </div>
+
+    <!-- VOTE PANEL — question changes per sub-step -->
+    <div class="vote-panel" id="votePanel">
+      <div class="vote-q" id="voteQ">Loading…</div>
+      <div class="vote-btns-row">
+        <button class="vote-big-btn tick" id="vBtnYes" onclick="voteBig('yes')">✓ Yes</button>
+        <button class="vote-big-btn cross" id="vBtnNo" onclick="voteBig('no')">✗ No</button>
+        <span class="vote-hint" id="voteHint"></span>
+      </div>
+      <div class="fb" id="fbVote"></div>
+    </div>
+
+    <div class="gate" id="overlapGate">
+      🔍 <strong>Well done on all three!</strong> Now drag the triangles on top of each other and rotate them. They are all the <em>same</em> triangle — only the chosen base is different! Once you've explored, answer below.
+    </div>
+
+    <div id="q1Ans" style="display:none;">
+      <textarea id="a1" placeholder="After overlapping the triangles — what can you say about the base of a triangle?"></textarea>
+      <div class="btn-row">
+        <button class="btn-chk" onclick="chk1()">Check answer</button>
+        <button class="btn-hnt" onclick="hint(1)">💬 Hint</button>
+      </div>
+      <div class="fb" id="fb1"></div>
+      <button class="btn-nxt" id="nx1" onclick="go(2)">Next question →</button>
+    </div>
+    <div class="controls-row" style="margin-top:.65rem;">
+      <button class="btn-reset" onclick="resetQ1()">↺ Reset positions</button>
+      <button class="btn-reset" id="splitBtn" style="display:none;background:#e8f4e8;color:var(--green);border-color:var(--green2);" onclick="splitTris()">↔ Split triangles apart</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Q2 ══ -->
+<div id="s2" style="display:none;">
+  <div class="card">
+    <div class="qnum">Question 2</div>
+    <div class="qtitle">What is the relationship between the base and the height?</div>
+    <div class="qinst">Three different triangles are shown, each with a base and height (H) labelled. <strong>Turn on the set square</strong> and place its corner where H meets the base on each triangle. What do you notice about the angle?</div>
+    <div class="tip">📐 Turn on the set square → place its corner where H meets the base, then answer</div>
+    <div class="controls-row">
+      <button class="ctrl-btn" id="ssBtn2" onclick="toggleSS(2)">📐 Set Square: OFF</button>
+      <button class="btn-reset" onclick="resetQ2()">↺ Reset</button>
+    </div>
+    <div class="cwrap" id="cWrap2">
+      <canvas id="c2" class="mc" width="1200" height="920"></canvas>
+    </div>
+
+    <!-- VOTE PANEL Q2 -->
+    <div class="vote-panel" id="votePanel2">
+      <div class="vote-q" id="voteQ2">Loading…</div>
+      <div class="vote-btns-row">
+        <button class="vote-big-btn tick" id="vBtnYes2" onclick="voteBig2('yes')">✓ Yes</button>
+        <button class="vote-big-btn cross" id="vBtnNo2" onclick="voteBig2('no')">✗ No</button>
+        <button class="btn-hnt" style="margin-left:.5rem;" onclick="hintQ2Glow()">💬 Hint</button>
+        <span class="vote-hint" id="voteHint2"></span>
+      </div>
+      <div class="fb" id="fbVote2"></div>
+    </div>
+
+    <div class="gate" id="overlapGate2">
+      🔍 <strong>Well done on all three!</strong> Now write your answer below — what do you notice about the angle between the base and the height?
+    </div>
+
+    <div id="q2Ans" style="display:none;">
+      <textarea id="a2" placeholder="What angle does the height always make with the base?"></textarea>
+      <div class="btn-row">
+        <button class="btn-chk" onclick="chk2()">Check answer</button>
+        <button class="btn-hnt" onclick="hint(2)">💬 Hint</button>
+      </div>
+      <div class="fb" id="fb2"></div>
+      <button class="btn-nxt" id="nx2" onclick="go(3)">Next question →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Q3 ══ -->
+<div id="s3" style="display:none;">
+  <div class="card">
+    <div class="qnum">Question 3</div>
+    <div class="qtitle">Which triangle has its base and height labelled incorrectly? Why?</div>
+    <div class="qinst">One of the three triangles has a wrong label — H is not perpendicular to the base. Use the set square to check each triangle and find the incorrect one.</div>
+    <div class="tip">🔍 Set square corner where H meets the base — does it fit at 90°?</div>
+    <div class="controls-row">
+      <button class="ctrl-btn" id="ssBtn3" onclick="toggleSS(3)">📐 Set Square: OFF</button>
+      <button class="btn-reset" onclick="resetQ3()">↺ Reset</button>
+    </div>
+    <div class="cwrap">
+      <canvas id="c3" class="mc" width="1200" height="920"></canvas>
+    </div>
+    <textarea id="a3" placeholder="Which triangle is wrong? Why?"></textarea>
+    <div class="btn-row">
+      <button class="btn-chk" onclick="chk3()">Check answer</button>
+      <button class="btn-hnt" onclick="hint(3)">💬 Hint</button>
+    </div>
+    <div class="fb" id="fb3"></div>
+    <button class="btn-nxt" id="nx3" onclick="showDone()">Reveal full picture →</button>
+  </div>
+</div>
+
+<!-- COMPLETE -->
+<div id="sDone" class="card complete">
+  <div style="font-size:2.2rem;margin-bottom:.3rem;">🏛️</div>
+  <h2>The Pyramid is fully revealed!</h2>
+  <p>You've mastered the rules of base and height in triangles. Excellent work!</p>
+  <div class="summary">
+    <h3>What you discovered</h3>
+    <div class="sum-item">The base of a triangle is <em>any</em> side — all three sides can each be the base.</div>
+    <div class="sum-item">The height is always perpendicular (90°) to the chosen base.</div>
+    <div class="sum-item">Rotating a triangle does not change the rule — any side is still a valid base.</div>
+    <div class="sum-item">If H is not at 90° to the base, the labelling is incorrect.</div>
+  </div>
+</div>
+
+<!-- CONFETTI OVERLAY -->
+<div id="confettiOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:999;pointer-events:none;">
+  <canvas id="confettiCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:all;">
+    <div style="background:white;border-radius:20px;padding:2rem 2.5rem;box-shadow:0 8px 40px rgba(0,0,0,.25);border:3px solid var(--amber2);max-width:480px;">
+      <div style="font-size:3rem;margin-bottom:.5rem;">🏆</div>
+      <div style="font-size:1.4rem;font-weight:800;color:var(--ink);margin-bottom:.5rem;font-family:var(--f);">Congratulations!</div>
+      <div style="font-size:1rem;color:var(--ink2);font-family:var(--f2);line-height:1.6;margin-bottom:1.25rem;">You have mastered the relationship between<br>base and height of triangles!</div>
+      <button onclick="closeConfetti()" style="background:var(--amber2);color:white;border:none;padding:.6rem 1.5rem;border-radius:var(--r);font-size:1rem;font-weight:700;font-family:var(--f);cursor:pointer;">See my results →</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- wrap -->
+<script>
+/* ═══════════════════════════
+   MYSTERY  580×310
+   ═══════════════════════════ */
+const MW=420,MH=220;
+let mysRev=0;
+const mysCvs=document.getElementById('mysCvs');
+const mysCtx=mysCvs.getContext('2d');
+function drawScene(ctx,ox,oy,W,H){
+  const sky=ctx.createLinearGradient(ox,oy,ox,oy+H*.5);sky.addColorStop(0,'#cce8f5');sky.addColorStop(1,'#f5e8c0');ctx.fillStyle=sky;ctx.fillRect(ox,oy,W,H);
+  ctx.fillStyle='#f5c030';ctx.beginPath();ctx.arc(ox+W*.86,oy+H*.15,H*.1,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(245,192,48,.14)';ctx.beginPath();ctx.arc(ox+W*.86,oy+H*.15,H*.17,0,Math.PI*2);ctx.fill();
+  const dg=ctx.createLinearGradient(ox,oy+H*.52,ox,oy+H);dg.addColorStop(0,'#d4a030');dg.addColorStop(1,'#a07020');ctx.fillStyle=dg;ctx.fillRect(ox,oy+H*.52,W,H*.48);
+  ctx.strokeStyle='rgba(160,100,20,.18)';ctx.lineWidth=.8;
+  for(let i=0;i<4;i++){const ry=oy+H*(.61+i*.09);ctx.beginPath();ctx.moveTo(ox,ry);for(let x=0;x<W;x+=26)ctx.quadraticCurveTo(ox+x+13,ry+(i%2?3:-3),ox+x+26,ry);ctx.stroke();}
+  const apex=[ox+W*.5,oy+H*.03],bL=[ox+W*.07,oy+H*.52],bR=[ox+W*.93,oy+H*.52],bM=[ox+W*.5,oy+H*.52];
+  ctx.beginPath();ctx.moveTo(apex[0],apex[1]);ctx.lineTo(bL[0],bL[1]);ctx.lineTo(bM[0],bM[1]);ctx.closePath();ctx.fillStyle='#e8b030';ctx.fill();
+  ctx.beginPath();ctx.moveTo(apex[0],apex[1]);ctx.lineTo(bR[0],bR[1]);ctx.lineTo(bM[0],bM[1]);ctx.closePath();ctx.fillStyle='#b07010';ctx.fill();
+  ctx.beginPath();ctx.moveTo(bL[0],bL[1]);ctx.lineTo(apex[0],apex[1]);ctx.lineTo(bR[0],bR[1]);ctx.strokeStyle='#7a4e08';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(bL[0],bL[1]);ctx.lineTo(bR[0],bR[1]);ctx.lineWidth=1.5;ctx.stroke();
+  ctx.strokeStyle='rgba(140,85,10,.18)';ctx.lineWidth=.8;
+  for(let i=1;i<9;i++){const t=i/9;ctx.beginPath();ctx.moveTo(bL[0]+(apex[0]-bL[0])*t,bL[1]+(apex[1]-bL[1])*t);ctx.lineTo(bM[0],bM[1]+(apex[1]-bM[1])*t);ctx.stroke();}
+  [[ox+W*.03,W*.13,H*.28],[ox+W*.8,W*.14,H*.25]].forEach(([bx,bw,bh])=>{const sa=[bx+bw/2,oy+H*.52-bh];ctx.beginPath();ctx.moveTo(bx,oy+H*.52);ctx.lineTo(sa[0],sa[1]);ctx.lineTo(bx+bw*.5,oy+H*.52);ctx.closePath();ctx.fillStyle='#d4a030';ctx.fill();ctx.beginPath();ctx.moveTo(bx+bw*.5,oy+H*.52);ctx.lineTo(sa[0],sa[1]);ctx.lineTo(bx+bw,oy+H*.52);ctx.closePath();ctx.fillStyle='#aa7818';ctx.fill();ctx.beginPath();ctx.moveTo(bx,oy+H*.52);ctx.lineTo(sa[0],sa[1]);ctx.lineTo(bx+bw,oy+H*.52);ctx.closePath();ctx.strokeStyle='#7a4e08';ctx.lineWidth=1.2;ctx.stroke();});
+  ctx.fillStyle='#c09020';const sx=ox+W*.12,sy=oy+H*.52;ctx.fillRect(sx,sy-12,32,11);ctx.fillRect(sx+24,sy-21,11,12);ctx.fillRect(sx+26,sy-27,9,8);ctx.fillRect(sx+1,sy-1,6,10);ctx.fillRect(sx+20,sy-1,6,10);
+  [[ox+W*.01,oy+H*.52],[ox+W*.96,oy+H*.52]].forEach(([tx,ty])=>{ctx.strokeStyle='#7a5010';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx-1,ty-32);ctx.stroke();ctx.strokeStyle='#3a7010';ctx.lineWidth=1.4;[[-14,-4],[13,-4],[-9,-14],[9,-14],[0,-20]].forEach(([dx,dy])=>{ctx.beginPath();ctx.moveTo(tx-1,ty-32);ctx.lineTo(tx+dx,ty-32+dy);ctx.stroke();});});
+}
+function initMystery(){
+  mysCtx.clearRect(0,0,MW,MH);mysCtx.fillStyle='rgba(210,190,140,.94)';mysCtx.fillRect(0,0,MW,MH);
+  mysCtx.strokeStyle='rgba(180,150,80,.3)';mysCtx.lineWidth=1;mysCtx.beginPath();mysCtx.moveTo(MW/2,0);mysCtx.lineTo(MW/2,MH);mysCtx.stroke();mysCtx.beginPath();mysCtx.moveTo(0,MH/2);mysCtx.lineTo(MW,MH/2);mysCtx.stroke();
+  mysCtx.fillStyle='rgba(160,120,40,.4)';mysCtx.font='bold 58px Arial,sans-serif';mysCtx.textAlign='center';mysCtx.textBaseline='middle';mysCtx.fillText('?',MW/4,MH/2);mysCtx.fillText('?',MW*3/4,MH/2);updateMysStatus();
+}
+function revealMystery(step){
+  mysRev=step;mysCtx.clearRect(0,0,MW,MH);drawScene(mysCtx,0,0,MW,MH);
+  if(step<3){
+    mysCtx.fillStyle='rgba(210,190,140,.9)';
+    if(step===1){mysCtx.fillRect(0,MH/2,MW,MH/2);mysCtx.strokeStyle='rgba(170,130,50,.5)';mysCtx.lineWidth=1.5;mysCtx.setLineDash([6,4]);mysCtx.beginPath();mysCtx.moveTo(0,MH/2);mysCtx.lineTo(MW,MH/2);mysCtx.stroke();mysCtx.setLineDash([]);mysCtx.fillStyle='rgba(160,120,40,.4)';mysCtx.font='bold 48px Arial,sans-serif';mysCtx.textAlign='center';mysCtx.textBaseline='middle';mysCtx.fillText('?',MW/4,MH*3/4);mysCtx.fillText('?',MW*3/4,MH*3/4);}
+    else{mysCtx.fillRect(MW/2,MH/2,MW/2,MH/2);mysCtx.strokeStyle='rgba(170,130,50,.5)';mysCtx.lineWidth=1.5;mysCtx.setLineDash([6,4]);mysCtx.beginPath();mysCtx.moveTo(MW/2,MH/2);mysCtx.lineTo(MW,MH/2);mysCtx.stroke();mysCtx.beginPath();mysCtx.moveTo(MW/2,MH/2);mysCtx.lineTo(MW/2,MH);mysCtx.stroke();mysCtx.setLineDash([]);mysCtx.fillStyle='rgba(160,120,40,.4)';mysCtx.font='bold 48px Arial,sans-serif';mysCtx.textAlign='center';mysCtx.textBaseline='middle';mysCtx.fillText('?',MW*3/4,MH*3/4);}
+  } else {mysCtx.strokeStyle='#c8860a';mysCtx.lineWidth=3;mysCtx.strokeRect(2,2,MW-4,MH-4);}
+  updateMysStatus();
+}
+function updateMysStatus(){document.getElementById('mysStatus').textContent=['Answer a question correctly to reveal part of the picture…','Quarter 1 revealed — keep going!','Three quarters revealed — almost there!','🎉 The Pyramids of Giza — fully revealed!'][Math.min(mysRev,3)];}
+
+/* ═══════════════════════════
+   GRID
+   ═══════════════════════════ */
+const GS=44;
+function drawGrid(ctx,w,h){ctx.save();ctx.strokeStyle='rgba(190,165,115,.36)';ctx.lineWidth=.7;for(let x=0;x<=w;x+=GS){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}for(let y=0;y<=h;y+=GS){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}ctx.restore();}
+
+/* ═══════════════════════════
+   ARROW
+   ═══════════════════════════ */
+function drawArrow(ctx,x1,y1,x2,y2,col){
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);if(len<2)return;
+  const ux=dx/len,uy=dy/len,ah=13,aw=6.5;
+  ctx.save();ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=2.8;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  [[x2,y2,ux,uy],[x1,y1,-ux,-uy]].forEach(([px,py,ex,ey])=>{ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px-ah*ex+aw*ey,py-ah*ey-aw*ex);ctx.lineTo(px-ah*ex-aw*ey,py-ah*ey+aw*ex);ctx.closePath();ctx.fill();});
+  ctx.restore();
+}
+
+function dist(x1,y1,x2,y2){return Math.sqrt((x2-x1)**2+(y2-y1)**2);}
+
+/* ═══════════════════════════
+   ROTATION HANDLE
+   ═══════════════════════════ */
+function drawRotHandle(ctx,rx,ry){
+  const R=14;ctx.beginPath();ctx.arc(rx,ry,R,0,Math.PI*2);ctx.fillStyle='rgba(36,112,204,.82)';ctx.fill();ctx.strokeStyle='rgba(20,55,170,.9)';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.save();ctx.strokeStyle='white';ctx.lineWidth=2.2;ctx.lineCap='round';ctx.beginPath();ctx.arc(rx,ry,7.5,Math.PI*.2,Math.PI*1.8);ctx.stroke();
+  const ea=Math.PI*1.8,ax=rx+7.5*Math.cos(ea),ay=ry+7.5*Math.sin(ea),ta=ea+Math.PI/2;
+  ctx.fillStyle='white';ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax-7*Math.cos(ta)+4*Math.cos(ta+Math.PI/2),ay-7*Math.sin(ta)+4*Math.sin(ta+Math.PI/2));ctx.lineTo(ax-7*Math.cos(ta)-4*Math.cos(ta+Math.PI/2),ay-7*Math.sin(ta)-4*Math.sin(ta+Math.PI/2));ctx.closePath();ctx.fill();
+  ctx.restore();
+}
+
+/* ═══════════════════════════
+   SET SQUARE
+   ═══════════════════════════ */
+class SetSquare{
+  constructor(x,y){this.x=x;this.y=y;this.rot=0;this.sz=104;this.on=false;}
+  tf(lx,ly){return[this.x+lx*Math.cos(this.rot)-ly*Math.sin(this.rot),this.y+lx*Math.sin(this.rot)+ly*Math.cos(this.rot)];}
+  rotH(){return this.tf(this.sz*.52,-this.sz*.52);}
+  contains(mx,my){const dx=mx-this.x,dy=my-this.y,lx=dx*Math.cos(-this.rot)-dy*Math.sin(-this.rot),ly=dx*Math.sin(-this.rot)+dy*Math.cos(-this.rot);return lx>=0&&ly<=0&&(lx-ly)<=this.sz;}
+  draw(ctx){
+    if(!this.on)return;
+    ctx.save();ctx.translate(this.x,this.y);ctx.rotate(this.rot);const s=this.sz;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(s,0);ctx.lineTo(0,-s);ctx.closePath();ctx.fillStyle='rgba(36,112,204,.13)';ctx.fill();ctx.strokeStyle='#2470cc';ctx.lineWidth=2.2;ctx.stroke();
+    const m=22;ctx.strokeStyle='#2470cc';ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(m,0);ctx.lineTo(m,-m);ctx.lineTo(0,-m);ctx.stroke();
+    ctx.fillStyle='#1a4fa0';ctx.font='bold 12px Arial,sans-serif';ctx.textAlign='center';ctx.fillText('90°',m+17,-m/2);ctx.restore();
+    const rh=this.rotH();drawRotHandle(ctx,rh[0],rh[1]);
+  }
+}
+
+/* ═══════════════════════════
+   TRIANGLE CLASS
+   ═══════════════════════════ */
+class Tri{
+  constructor(pts,cx,cy,rot,col,name){
+    this.pts=pts;this.cx=cx;this.cy=cy;this.rot=rot||0;this.col=col;this.name=name||'';
+    this.bE=null;this.hP=null;this.wrong=false;this.vtxLabels=[];
+    this._baseMid=null;this._active=true;
+  }
+  tf(p){return[this.cx+p[0]*Math.cos(this.rot)-p[1]*Math.sin(this.rot),this.cy+p[0]*Math.sin(this.rot)+p[1]*Math.cos(this.rot)];}
+  verts(){return this.pts.map(p=>this.tf(p));}
+  ctr(){const v=this.verts();return[(v[0][0]+v[1][0]+v[2][0])/3,(v[0][1]+v[1][1]+v[2][1])/3];}
+  rotH(){
+    // Pick the edge midpoint that is furthest from the base-label position,
+    // so the handle shifts away when overlapping with "base" text or other triangles.
+    const v=this.verts();
+    const[cx,cy]=this.ctr();
+    // Compute midpoint + outward offset for all three edges
+    const edges=[[0,1],[1,2],[0,2]];
+    let best=null, bestScore=-Infinity;
+    edges.forEach(([i,j])=>{
+      const mx=(v[i][0]+v[j][0])/2;
+      const my=(v[i][1]+v[j][1])/2;
+      const dx=mx-cx, dy=my-cy, dl=Math.sqrt(dx*dx+dy*dy)||1;
+      const hx=mx+dx/dl*38, hy=my+dy/dl*38;
+      // Score = distance from the base-label anchor (if known), else distance from top of canvas
+      let score;
+      if(this._baseMid){
+        const bdx=hx-this._baseMid[0], bdy=hy-this._baseMid[1];
+        score=Math.sqrt(bdx*bdx+bdy*bdy);
+      } else {
+        // No base label yet: prefer midpoint furthest from centroid (hypotenuse)
+        score=Math.sqrt(dx*dx+dy*dy);
+      }
+      if(score>bestScore){bestScore=score;best=[hx,hy];}
+    });
+    return best||[cx,cy-40];
+  }
+  hit(x,y){const v=this.verts();let i=false;for(let a=0,b=2;a<3;b=a++){if(((v[a][1]>y)!==(v[b][1]>y))&&(x<(v[b][0]-v[a][0])*(y-v[a][1])/(v[b][1]-v[a][1])+v[a][0]))i=!i;}return i;}
+}
+
+/* ═══════════════════════════
+   RENDER SINGLE TRIANGLE
+   ═══════════════════════════ */
+function renderTri(ctx,t,showB,showH,hideHandle){
+  const v=t.verts();
+  const[ccx,ccy]=t.ctr();
+  ctx.save();
+
+  ctx.beginPath();ctx.moveTo(v[0][0],v[0][1]);ctx.lineTo(v[1][0],v[1][1]);ctx.lineTo(v[2][0],v[2][1]);ctx.closePath();
+  ctx.fillStyle=t.wrong?'rgba(200,60,60,.12)':t.col;ctx.fill();
+  ctx.strokeStyle='#2e2010';ctx.lineWidth=2.8;ctx.stroke();
+
+  // Triangle name — support two lines split on \n
+  // Line 0 = "Triangle N" centred above; line 1 = type label, offset left of vertex C
+  if(t.name){
+    const parts=t.name.split('\n');
+    ctx.font='800 24px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    // First line: centred above triangle
+    const topY=Math.min(...v.map(p=>p[1]))-42;
+    ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=6;ctx.lineJoin='round';ctx.strokeText(parts[0],ccx,topY);
+    ctx.fillStyle=t.wrong?'#901010':'#3a2010';ctx.fillText(parts[0],ccx,topY);
+    // Second line (type): anchored to the left of vertex C (index 2) to avoid label overlap
+    if(parts[1]){
+      const[cx2,cy2]=v[2]; // vertex C — top vertex
+      ctx.font='700 19px Arial,sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+      const tx=cx2-32, ty=cy2-22;
+      ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=5;ctx.lineJoin='round';ctx.strokeText(parts[1],tx,ty);
+      ctx.fillStyle=t.wrong?'#901010':'#5a4020';ctx.fillText(parts[1],tx,ty);
+    }
+  }
+
+  // Vertex labels
+  t.vtxLabels.forEach(({idx,lbl})=>{
+    const[vx,vy]=v[idx];
+    const dx=vx-ccx,dy=vy-ccy,dl=Math.sqrt(dx*dx+dy*dy)||1;
+    const lx=vx+dx/dl*28,ly=vy+dy/dl*28;
+    ctx.font='800 28px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=6;ctx.lineJoin='round';ctx.strokeText(lbl,lx,ly);
+    ctx.fillStyle='#1a1208';ctx.fillText(lbl,lx,ly);
+  });
+
+  // Dashed base extension (for obtuse triangles where H foot is outside base)
+  if(showB&&t.dashBaseExt){
+    const p1=t.tf(t.dashBaseExt[0]),p2=t.tf(t.dashBaseExt[1]);
+    ctx.save();ctx.setLineDash([6,5]);ctx.strokeStyle='#c8860a';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.stroke();
+    ctx.restore();
+  }
+
+  // BASE arrow + label
+  if(showB&&t.bE!=null){
+    const col=t.wrong?'#c01818':'#c8860a';
+    const b1=v[t.bE[0]],b2=v[t.bE[1]];
+    drawArrow(ctx,b1[0],b1[1],b2[0],b2[1],col);
+    const mx=(b1[0]+b2[0])/2,my=(b1[1]+b2[1])/2;
+    const bdx=b2[0]-b1[0],bdy=b2[1]-b1[1],bl=Math.sqrt(bdx*bdx+bdy*bdy)||1;
+    let nx=-bdy/bl,ny=bdx/bl;
+    if((mx+nx*5-ccx)*nx+(my+ny*5-ccy)*ny<0){nx=-nx;ny=-ny;}
+    ctx.font='800 28px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=6;ctx.lineJoin='round';
+    ctx.strokeText('base',mx+nx*38,my+ny*38);ctx.fillStyle=col;ctx.fillText('base',mx+nx*38,my+ny*38);
+    t._baseMid=[mx+nx*70,my+ny*70];
+  }
+
+  // HEIGHT arrow + label
+  if(showH&&t.hP!=null){
+    const col=t.wrong?'#c01818':'#1a4fa0';
+    const hp1=t.tf(t.hP[0]),hp2=t.tf(t.hP[1]);
+    drawArrow(ctx,hp1[0],hp1[1],hp2[0],hp2[1],col);
+    const hmx=(hp1[0]+hp2[0])/2,hmy=(hp1[1]+hp2[1])/2;
+    const hdx=hp2[0]-hp1[0],hdy=hp2[1]-hp1[1],hl=Math.sqrt(hdx*hdx+hdy*hdy)||1;
+    let hnx=-hdy/hl,hny=hdx/hl;
+    if((hmx+hnx*5-ccx)*hnx+(hmy+hny*5-ccy)*hny<0){hnx=-hnx;hny=-hny;}
+    // Choose normal direction that points AWAY from rotation handle, close to height line
+    const rh=t.rotH();
+    const opt1=[hmx+hnx*18, hmy+hny*18];
+    const opt2=[hmx-hnx*18, hmy-hny*18];
+    const d1=(opt1[0]-rh[0])**2+(opt1[1]-rh[1])**2;
+    const d2=(opt2[0]-rh[0])**2+(opt2[1]-rh[1])**2;
+    const [hlx,hly]=d1>=d2?opt1:opt2;
+    ctx.font='800 28px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=6;ctx.lineJoin='round';
+    ctx.strokeText('H',hlx,hly);ctx.fillStyle=col;ctx.fillText('H',hlx,hly);
+
+    // HINT GLOW — pulsing ring at the foot where H meets the base
+    if(t.hintGlow){
+      const footX=hp2[0], footY=hp2[1];
+      const now=Date.now();
+      const pulse=0.5+0.5*Math.sin(now/200);
+      const r2=30+pulse*14;
+      const grad=ctx.createRadialGradient(footX,footY,4,footX,footY,r2);
+      grad.addColorStop(0,`rgba(255,180,0,${0.85+pulse*.15})`);
+      grad.addColorStop(0.5,`rgba(255,120,0,${0.45+pulse*.15})`);
+      grad.addColorStop(1,'rgba(255,80,0,0)');
+      ctx.beginPath();ctx.arc(footX,footY,r2,0,Math.PI*2);
+      ctx.fillStyle=grad;ctx.fill();
+      ctx.beginPath();ctx.arc(footX,footY,8,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,200,0,${0.85+pulse*.15})`;ctx.fill();
+      ctx.strokeStyle='white';ctx.lineWidth=2;ctx.stroke();
+      // keep animating only while glow is active
+      if(t.hintGlow&&ctrl2){requestAnimationFrame(()=>{if(t.hintGlow&&ctrl2)ctrl2.draw();});}
+    }
+  }
+
+  ctx.restore();
+  if(!hideHandle){const rh=t.rotH();drawRotHandle(ctx,rh[0],rh[1]);}
+}
+
+/* ═══════════════════════════
+   RENDER MERGED (all overlapping)
+   Draws one triangle with all 3 sides glowing in their base colours
+   and all 3 "base" labels shown
+   ═══════════════════════════ */
+function renderMerged(ctx,tris){
+  // All triangles are coincident — use tris[0] geometry for everything
+  const t0=tris[0];
+  const v=t0.verts();
+  const[ccx,ccy]=t0.ctr();
+
+  // Fill
+  ctx.beginPath();ctx.moveTo(v[0][0],v[0][1]);ctx.lineTo(v[1][0],v[1][1]);ctx.lineTo(v[2][0],v[2][1]);ctx.closePath();
+  ctx.fillStyle='rgba(240,230,180,.45)';ctx.fill();
+  ctx.strokeStyle='#2e2010';ctx.lineWidth=2;ctx.stroke();
+
+  // Base edges and their colours/labels — use tris[0] local coords, same geometry for all
+  // T1 base: AB = pts[0]→pts[1]  amber
+  // T2 base: AC = pts[0]→pts[2]  blue
+  // T3 base: BC = pts[1]→pts[2]  green
+  const baseDefs=[
+    {ei:[0,1], col:'#c8860a', name:'base (AB)'},
+    {ei:[0,2], col:'#2470cc', name:'base (AC)'},
+    {ei:[1,2], col:'#28a044', name:'base (BC)'},
+  ];
+
+  baseDefs.forEach(({ei,col,name},i)=>{
+    const b1=v[ei[0]],b2=v[ei[1]];
+    const glowW=[28,20,14][i];
+
+    // Glow
+    ctx.save();
+    ctx.strokeStyle=col;ctx.lineWidth=glowW;ctx.globalAlpha=0.15;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(b1[0],b1[1]);ctx.lineTo(b2[0],b2[1]);ctx.stroke();
+    ctx.lineWidth=glowW*.55;ctx.globalAlpha=0.28;
+    ctx.beginPath();ctx.moveTo(b1[0],b1[1]);ctx.lineTo(b2[0],b2[1]);ctx.stroke();
+    ctx.restore();
+
+    // Arrow
+    drawArrow(ctx,b1[0],b1[1],b2[0],b2[1],col);
+
+    // Base label pushed outward
+    const mx=(b1[0]+b2[0])/2,my=(b1[1]+b2[1])/2;
+    const bdx=b2[0]-b1[0],bdy=b2[1]-b1[1],bl=Math.sqrt(bdx*bdx+bdy*bdy)||1;
+    let nx=-bdy/bl,ny=bdx/bl;
+    if((mx+nx*5-ccx)*nx+(my+ny*5-ccy)*ny<0){nx=-nx;ny=-ny;}
+    const labelDist=42+i*22;
+    ctx.save();
+    ctx.font='800 24px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.strokeStyle='rgba(255,255,255,.92)';ctx.lineWidth=6;ctx.lineJoin='round';
+    ctx.strokeText(name,mx+nx*labelDist,my+ny*labelDist);
+    ctx.fillStyle=col;ctx.fillText(name,mx+nx*labelDist,my+ny*labelDist);
+    ctx.restore();
+  });
+
+  // Vertex labels
+  t0.vtxLabels.forEach(({idx,lbl})=>{
+    const[vx,vy]=v[idx];
+    const dx=vx-ccx,dy=vy-ccy,dl=Math.sqrt(dx*dx+dy*dy)||1;
+    const lx=vx+dx/dl*28,ly=vy+dy/dl*28;
+    ctx.save();
+    ctx.font='800 28px Arial,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=6;ctx.lineJoin='round';ctx.strokeText(lbl,lx,ly);
+    ctx.fillStyle='#1a1208';ctx.fillText(lbl,lx,ly);
+    ctx.restore();
+  });
+}
+
+/* check if all 3 tris are overlapping (centroids within 1 grid cell of each other) */
+function areOverlapping(tris){
+  if(tris.length<3)return false;
+  const ctrs=tris.map(t=>t.ctr());
+  const threshold=GS; // within 1 grid cell — must be truly on top of each other
+  for(let i=1;i<ctrs.length;i++){
+    const dx=ctrs[i][0]-ctrs[0][0],dy=ctrs[i][1]-ctrs[0][1];
+    if(Math.sqrt(dx*dx+dy*dy)>threshold)return false;
+  }
+  return true;
+}
+
+/* ═══════════════════════════
+   TRIANGLE FACTORY
+   4×3.5 grid units: A(BL) right-angle, B(BR), C(TL)
+   Canvas 1200×920, GS=44 → each tri ~352×308px
+   Positions with ≥1 grid gap:
+     T1 top-left: cx=220, cy=220
+     T2 top-right: cx=820, cy=220   gap between: 820-220-176=424 → well clear
+     T3 bottom-centre: cx=520, cy=490
+   ═══════════════════════════ */
+const U=GS;
+const PTS=[[-4*U,3.5*U],[4*U,3.5*U],[-4*U,-3.5*U]]; // A=BL, B=BR, C=TL
+function cp(){return PTS.map(p=>[...p]);}
+function lbl(t){t.vtxLabels=[{idx:0,lbl:'A'},{idx:1,lbl:'B'},{idx:2,lbl:'C'}];}
+
+// T1: base=AB (bottom), H=left vertical C→A
+function mkT1(cx,cy,name){const t=new Tri(cp(),cx,cy,0,'rgba(255,220,100,.38)',name||'Triangle 1');t.bE=[0,1];t.hP=[[-4*U,-3.5*U],[-4*U,3.5*U]];lbl(t);return t;}
+// T2: base=AC (left side), H=horizontal B→foot
+function mkT2(cx,cy,name){const t=new Tri(cp(),cx,cy,0,'rgba(180,220,255,.42)',name||'Triangle 2');t.bE=[0,2];t.hP=[[4*U,3.5*U],[-4*U,3.5*U]];lbl(t);return t;}
+// T3: base=BC (hypotenuse), H=altitude from A
+function mkT3(cx,cy,name){
+  const t=new Tri(cp(),cx,cy,0,'rgba(180,255,200,.42)',name||'Triangle 3');t.bE=[1,2];
+  const[hx,hy]=[4*U,3.5*U],[tx,ty]=[-4*U,-3.5*U];
+  const ddx=tx-hx,ddy=ty-hy,dl2=ddx*ddx+ddy*ddy;
+  const tp=((-4*U-hx)*ddx+(3.5*U-hy)*ddy)/dl2;
+  t.hP=[[-4*U,3.5*U],[hx+tp*ddx,hy+tp*ddy]];lbl(t);return t;
+}
+// Wrong: base=AB, H diagonal
+function mkWrong(cx,cy,name){const t=new Tri(cp(),cx,cy,0,'rgba(255,200,200,.32)',name||'Triangle 2 (top-right)');t.bE=[0,1];t.hP=[[-4*U,-3.5*U],[3*U,3.5*U]];t.wrong=true;lbl(t);return t;}
+
+/* ═══════════════════════════
+   Q2 TRIANGLE TYPES
+   Right-angle: base=horizontal bottom, H=vertical (inside)
+   Acute: base=horizontal bottom, H=internal altitude from apex
+   Obtuse: base=horizontal bottom, H falls outside (dashed extension)
+   All correctly labelled
+   ═══════════════════════════ */
+
+// Right-angle triangle: A(bottom-left), B(bottom-right), C(top-left)
+// base=AB, H=left vertical CA
+function mkQ2Right(cx,cy,name){
+  const pts=[[-4*U,3*U],[4*U,3*U],[-4*U,-3*U]];
+  const t=new Tri(pts,cx,cy,0,'rgba(255,220,100,.38)',name||'Triangle 1\n(right-angle)');
+  t.bE=[0,1]; t.hP=[[-4*U,-3*U],[-4*U,3*U]];
+  t.vtxLabels=[{idx:0,lbl:'A'},{idx:1,lbl:'B'},{idx:2,lbl:'C'}];
+  return t;
+}
+
+// Acute triangle: A(bottom-left), B(bottom-right), C(top-centre)
+// base=AB, H=vertical drop from C to base
+function mkQ2Acute(cx,cy,name){
+  const pts=[[-4*U,3*U],[4*U,3*U],[0,-3.5*U]];
+  const t=new Tri(pts,cx,cy,0,'rgba(180,220,255,.42)',name||'Triangle 2\n(acute)');
+  t.bE=[0,1]; t.hP=[[0,-3.5*U],[0,3*U]];
+  t.vtxLabels=[{idx:0,lbl:'A'},{idx:1,lbl:'B'},{idx:2,lbl:'C'}];
+  return t;
+}
+
+// Obtuse triangle: A(bottom-left), B(bottom-right), C(top, leaning far left so H falls outside)
+// base=AB, H=perpendicular from C drops outside base to the left
+function mkQ2Obtuse(cx,cy,name){
+  const pts=[[-3*U,3*U],[4*U,3*U],[-6.5*U,-2.5*U]];
+  const t=new Tri(pts,cx,cy,0,'rgba(180,255,200,.42)',name||'Triangle 3\n(obtuse)');
+  t.bE=[0,1];
+  // Foot of perpendicular from C=(-6.5U,-2.5U) onto base line y=3U: foot is (-6.5U,3U)
+  t.hP=[[-6.5*U,-2.5*U],[-6.5*U,3*U]];
+  // The foot is outside the base segment (left of A), so we need a dashed extension on base
+  t.dashBaseExt=[[-3*U,3*U],[-6.5*U,3*U]]; // extend base left to foot
+  t.vtxLabels=[{idx:0,lbl:'A'},{idx:1,lbl:'B'},{idx:2,lbl:'C'}];
+  return t;
+}
+
+const DPOS=[{cx:230,cy:260},{cx:970,cy:260},{cx:600,cy:670}];
+
+function makeCtrl(id,tris,showB,showH,ssRef,onDrawCb){
+  const canvas=document.getElementById(id);const ctx=canvas.getContext('2d');
+  canvas.width=1200;canvas.height=920;
+  let dragT=null,rotT=null,dragSS=false,rotSS=false,ox=0,oy=0;
+  function pos(e){const r=canvas.getBoundingClientRect();const sx=canvas.width/r.width,sy=canvas.height/r.height;const s=e.touches?e.touches[0]:e;return[(s.clientX-r.left)*sx,(s.clientY-r.top)*sy];}
+  function draw(){
+    ctx.clearRect(0,0,1200,920);drawGrid(ctx,1200,920);
+    const merged=tris.length===3&&areOverlapping(tris);
+    // Show/hide the split button
+    const splitBtn=document.getElementById('splitBtn');
+    if(splitBtn)splitBtn.style.display=merged?'inline-block':'none';
+    if(merged){
+      // Auto-snap all three to canvas centre
+      const centreX=600, centreY=460;
+      if(Math.abs(tris[0].cx-centreX)>2||Math.abs(tris[0].cy-centreY)>2){
+        tris.forEach(t=>{t.cx=centreX;t.cy=centreY;});
+      }
+      renderMerged(ctx,tris);
+    } else {
+      tris.forEach(t=>renderTri(ctx,t,showB,showH,false));
+    }
+    if(ssRef)ssRef.draw(ctx);if(onDrawCb)onDrawCb(tris,canvas);
+  }
+  function down(e){
+    e.preventDefault();const[mx,my]=pos(e);
+    const merged=tris.length===3&&areOverlapping(tris);
+    if(merged){
+      // Drag all three together — treat any hit on any triangle as grabbing the group
+      const hit=tris.some(t=>t.hit(mx,my));
+      if(hit){dragT='group';ox=mx-tris[0].cx;oy=my-tris[0].cy;}
+      return;
+    }
+    if(ssRef&&ssRef.on){const rh=ssRef.rotH();if(dist(mx,my,rh[0],rh[1])<16){rotSS=true;return;}if(ssRef.contains(mx,my)){dragSS=true;ox=mx-ssRef.x;oy=my-ssRef.y;return;}}
+    for(let i=tris.length-1;i>=0;i--){const t=tris[i],rh=t.rotH();if(dist(mx,my,rh[0],rh[1])<16){rotT=t;return;}}
+    for(let i=tris.length-1;i>=0;i--){if(tris[i].hit(mx,my)){dragT=tris[i];ox=mx-tris[i].cx;oy=my-tris[i].cy;tris.splice(i,1);tris.push(dragT);return;}}
+  }
+  function move(e){
+    e.preventDefault();const[mx,my]=pos(e);
+    if(dragSS&&ssRef){ssRef.x=mx-ox;ssRef.y=my-oy;draw();return;}
+    if(rotSS&&ssRef){ssRef.rot=Math.atan2(my-ssRef.y,mx-ssRef.x)-Math.atan2(-ssRef.sz*.52,ssRef.sz*.52);draw();return;}
+    if(dragT==='group'){
+      // Move all three triangles together, maintaining their relative offsets
+      const newCx=mx-ox,newCy=my-oy;
+      const dcx=newCx-tris[0].cx,dcy=newCy-tris[0].cy;
+      tris.forEach(t=>{t.cx+=dcx;t.cy+=dcy;});
+      draw();return;
+    }
+    if(dragT){dragT.cx=mx-ox;dragT.cy=my-oy;draw();return;}
+    if(rotT){rotT.rot=Math.atan2(my-rotT.cy,mx-rotT.cx)+Math.PI/2;draw();return;}
+    const ov=tris.some(t=>t.hit(mx,my)||dist(mx,my,...t.rotH())<16)||(ssRef&&ssRef.on&&(ssRef.contains(mx,my)||dist(mx,my,...ssRef.rotH())<16));
+    canvas.style.cursor=ov?'grab':'crosshair';
+  }
+  function up(){dragT=null;rotT=null;dragSS=false;rotSS=false;}
+  canvas.addEventListener('mousedown',down);canvas.addEventListener('mousemove',move);canvas.addEventListener('mouseup',up);
+  canvas.addEventListener('touchstart',down,{passive:false});canvas.addEventListener('touchmove',move,{passive:false});canvas.addEventListener('touchend',up,{passive:false});
+  draw();return{draw,tris};
+}
+
+/* ═══════════════════════════
+   Q1 SEQUENTIAL VOTE STATE
+   step 0 → ask about T1 (AB bottom)
+   step 1 → ask about T2 (AC left side)
+   step 2 → ask about T3 (BC hypotenuse)
+   step 3 → all done, show overlap gate
+   ═══════════════════════════ */
+let voteStep=0;
+let q1Tris=null;
+let ctrl1=null;
+
+// Which triangles are visible at each step
+// Step 0: only T1 visible
+// Step 1: T1 + T2 visible
+// Step 2: T1 + T2 + T3 visible
+
+const VOTE_QS=[
+  {q:'Can line <em>AB</em> be the base of Triangle 1?', hint:'Look at the bottom side of Triangle 1, labelled AB.'},
+  {q:'Can line <em>AC</em> be the base of Triangle 2?', hint:'Look at the left side of Triangle 2, labelled AC.'},
+  {q:'Can line <em>BC</em> be the base of Triangle 3?', hint:'Look at the slanted side (hypotenuse) of Triangle 3, labelled BC.'},
+];
+
+function updateVotePanel(){
+  if(voteStep>=3){
+    if(el('votePanel'))el('votePanel').style.display='none';
+    if(el('overlapGate'))el('overlapGate').className='gate show';
+    if(el('q1Ans'))el('q1Ans').style.display='block';
+    return;
+  }
+  const qData=VOTE_QS[voteStep];
+  if(el('voteQ'))el('voteQ').innerHTML=qData.q;
+  if(el('voteHint'))el('voteHint').textContent=qData.hint;
+  if(el('vBtnYes'))el('vBtnYes').className='vote-big-btn tick';
+  if(el('vBtnNo'))el('vBtnNo').className='vote-big-btn cross';
+  if(el('fbVote'))el('fbVote').className='fb';
+  if(el('votePanel'))el('votePanel').style.display='block';
+}
+
+function voteBig(choice){
+  const fb=el('fbVote');if(!fb)return;
+  if(choice==='yes'){
+    if(el('vBtnYes'))el('vBtnYes').className='vote-big-btn tick sel';
+    fb.className='fb ok';
+    const msgs=[
+      'Correct! Line AB is the bottom side of the triangle — it is a valid base!',
+      'Correct! Line AC is the left side of the triangle — it can also be the base!',
+      'Correct! Line BC is the hypotenuse — it can be the base too!'
+    ];
+    fb.textContent=msgs[voteStep];
+    voteStep++;
+    setTimeout(()=>{rebuildQ1Canvas();updateVotePanel();},800);
+  } else {
+    if(el('vBtnNo'))el('vBtnNo').className='vote-big-btn cross sel';
+    fb.className='fb no';
+    fb.textContent='Hmm, take another look! You may drag or rotate the triangle if you want to.';
+  }
+}
+
+function splitTris(){
+  if(!q1Tris||q1Tris.length<3)return;
+  q1Tris[0].cx=DPOS[0].cx;q1Tris[0].cy=DPOS[0].cy;
+  q1Tris[1].cx=DPOS[1].cx;q1Tris[1].cy=DPOS[1].cy;
+  q1Tris[2].cx=DPOS[2].cx;q1Tris[2].cy=DPOS[2].cy;
+  ctrl1.draw();
+}
+
+function rebuildQ1Canvas(){
+  // Rebuild showing triangles 0..voteStep
+  // Positions: T1=top-left, T2=top-right, T3=bottom-centre
+  const trisToShow=[];
+  const configs=[
+    ()=>mkT1(DPOS[0].cx,DPOS[0].cy,'Triangle 1'),
+    ()=>mkT2(DPOS[1].cx,DPOS[1].cy,'Triangle 2'),
+    ()=>mkT3(DPOS[2].cx,DPOS[2].cy,'Triangle 3'),
+  ];
+  for(let i=0;i<=Math.min(voteStep,2);i++) trisToShow.push(configs[i]());
+  q1Tris=trisToShow;
+  ctrl1=makeCtrl('c1',q1Tris,true,false,null,null);
+}
+
+/* vote pips removed */
+
+/* ═══════════════════════════
+   STATE
+   ═══════════════════════════ */
+let ctrl2,ctrl3;
+let ss2=new SetSquare(600,460),ss3=new SetSquare(820,50);
+
+function initQ1(){voteStep=0;rebuildQ1Canvas();updateVotePanel();}
+function resetQ1(){voteStep=0;if(el('overlapGate'))el('overlapGate').className='gate';if(el('q1Ans'))el('q1Ans').style.display='none';if(el('fb1'))el('fb1').className='fb';if(el('nx1'))el('nx1').style.display='none';rebuildQ1Canvas();updateVotePanel();}
+
+/* ═══════════════════════════
+   Q2 SEQUENTIAL VOTE STATE
+   ═══════════════════════════ */
+/* ═══════════════════════════════════════
+   Q2 STATE — sequential reveal
+   ═══════════════════════════════════════ */
+let voteStep2=0;
+let q2Tris=null;
+let q2GlowTimer=null; // setInterval for glow animation
+let q2GlowTri=null;  // which triangle is glowing
+
+function el(id){return document.getElementById(id);}
+
+const Q2_QUESTIONS=[
+  'Place the set square where H meets the base in <em>Triangle 1</em>. Does the corner fit snugly?',
+  'Now try <em>Triangle 2</em> (acute triangle). Place the set square where H meets the base — does the corner fit?',
+  'Now try <em>Triangle 3</em> (obtuse triangle). The height falls <em>outside</em> — place the set square where H meets the dashed line. Does the corner fit?',
+];
+const Q2_OK_MSGS=[
+  'Correct! The set square corner fits perfectly — the height is perpendicular to the base!',
+  'Correct! Even in an acute triangle, the height meets the base at the same angle!',
+  'Correct! Even though the height falls outside the triangle, the set square still fits perfectly at the base line!',
+];
+
+function q2SetPanel(){
+  const vp=el('votePanel2'),vq=el('voteQ2'),yes=el('vBtnYes2'),no=el('vBtnNo2'),fb=el('fbVote2');
+  const og=el('overlapGate2'),qa=el('q2Ans');
+  if(voteStep2>=3){
+    if(vp)vp.style.display='none';
+    if(og)og.className='gate show';
+    if(qa)qa.style.display='block';
+    return;
+  }
+  q2StopGlow();
+  if(ctrl2)ctrl2.draw();
+  if(vq)vq.innerHTML=Q2_QUESTIONS[voteStep2];
+  if(yes)yes.className='vote-big-btn tick';
+  if(no)no.className='vote-big-btn cross';
+  if(fb)fb.className='fb';
+  if(vp)vp.style.display='block';
+}
+
+function voteBig2(choice){
+  const yes=el('vBtnYes2'),no=el('vBtnNo2'),fb=el('fbVote2');
+  if(!fb)return;
+  if(choice==='yes'){
+    if(yes)yes.className='vote-big-btn tick sel';
+    fb.className='fb ok';
+    fb.textContent=Q2_OK_MSGS[Math.min(voteStep2,2)];
+    q2StopGlow();
+    voteStep2++;
+    setTimeout(()=>{rebuildQ2Canvas();q2SetPanel();},900);
+  } else {
+    if(no)no.className='vote-big-btn cross sel';
+    fb.className='fb no';
+    fb.textContent='Hmm, take another look! Make sure the set square corner is exactly where H meets the base. Click 💬 Hint to see where!';
+  }
+}
+
+function q2StopGlow(){
+  if(q2GlowTimer){clearInterval(q2GlowTimer);q2GlowTimer=null;}
+  q2GlowTri=null;
+  if(q2Tris)q2Tris.forEach(t=>{t.hintGlow=false;});
+}
+
+function hintQ2Glow(){
+  if(!q2Tris||q2Tris.length===0)return;
+  q2StopGlow();
+  const idx=Math.min(voteStep2,q2Tris.length-1);
+  q2GlowTri=q2Tris[idx];
+  q2GlowTri.hintGlow=true;
+  // Use setInterval instead of rAF to avoid runaway loops
+  q2GlowTimer=setInterval(()=>{if(ctrl2)ctrl2.draw();},50);
+  const fb=el('fbVote2');
+  if(fb){fb.className='fb ht';fb.textContent='See the glowing spot — place the set square corner exactly there!';}
+}
+
+function rebuildQ2Canvas(){
+  q2StopGlow();
+  const configs=[
+    ()=>mkQ2Right(DPOS[0].cx,DPOS[0].cy,'Triangle 1\n(right-angle)'),
+    ()=>mkQ2Acute(DPOS[1].cx,DPOS[1].cy,'Triangle 2\n(acute)'),
+    ()=>mkQ2Obtuse(DPOS[2].cx,DPOS[2].cy,'Triangle 3\n(obtuse)'),
+  ];
+  const show=[];
+  for(let i=0;i<=Math.min(voteStep2,2);i++) show.push(configs[i]());
+  q2Tris=show;
+  ctrl2=makeCtrl('c2',q2Tris,true,true,ss2,null);
+}
+
+function initQ2(){
+  voteStep2=0;
+  ss2=new SetSquare(600,460);
+  q2StopGlow();
+  const og=el('overlapGate2'),qa=el('q2Ans'),fb=el('fbVote2'),fb2=el('fb2'),nx=el('nx2');
+  if(og)og.className='gate';
+  if(qa)qa.style.display='none';
+  if(fb)fb.className='fb';
+  if(fb2)fb2.className='fb';
+  if(nx)nx.style.display='none';
+  rebuildQ2Canvas();
+  q2SetPanel();
+}
+
+function resetQ2(){
+  voteStep2=0;
+  ss2=new SetSquare(600,460);
+  q2StopGlow();
+  const og=el('overlapGate2'),qa=el('q2Ans'),fb=el('fbVote2'),vp=el('votePanel2');
+  if(og)og.className='gate';
+  if(qa)qa.style.display='none';
+  if(fb)fb.className='fb';
+  if(vp)vp.style.display='block';
+  rebuildQ2Canvas();
+  q2SetPanel();
+}
+
+function initQ3(){ss3=new SetSquare(820,50);ctrl3=makeCtrl('c3',[mkT1(DPOS[0].cx,DPOS[0].cy,'Triangle 1 (top-left)'),mkWrong(DPOS[1].cx,DPOS[1].cy,'Triangle 2 (top-right)'),mkT3(DPOS[2].cx,DPOS[2].cy,'Triangle 3 (bottom)')],true,true,ss3,null);}
+function resetQ3(){ss3=new SetSquare(820,50);ctrl3=makeCtrl('c3',[mkT1(DPOS[0].cx,DPOS[0].cy,'Triangle 1 (top-left)'),mkWrong(DPOS[1].cx,DPOS[1].cy,'Triangle 2 (top-right)'),mkT3(DPOS[2].cx,DPOS[2].cy,'Triangle 3 (bottom)')],true,true,ss3,null);}
+
+/* ═══════════════════════════
+   ANSWERS
+   ═══════════════════════════ */
+function chk1(){
+  const a=el('a1');const fb=el('fb1');if(!a||!fb)return;
+  const ans=a.value.trim().toLowerCase();
+  if(!ans){fb.className='fb ht';fb.textContent='Please write your answer first!';return;}
+  if(/perpendicul|right angle|90/.test(ans)&&!/side|any/.test(ans)){fb.className='fb no';fb.textContent="That describes the height — focus on the base! What does the base always have in common with the triangle?";return;}
+  if(/any side|side of|a side|each side|every side|can be any|one of the|can be a side|all sides|all three/.test(ans)){fb.className='fb ok';fb.textContent='Excellent! The base is any side of the triangle. Rotating does not change this rule — any side can be the base!';revealMystery(1);const nx=el('nx1');if(nx)nx.style.display='inline-block';}
+  else{fb.className='fb no';fb.textContent='You have already seen all three sides can be the base! Try to describe what the base always is in relation to the triangle.';}
+}
+function chk2(){
+  const a=el('a2');const fb=el('fb2');if(!a||!fb)return;
+  const ans=a.value.trim().toLowerCase();
+  if(!ans){fb.className='fb ht';fb.textContent='Please write your answer first!';return;}
+  if(/perpendicul|right angle|90|at 90|90 deg|ninety|square corner|90°/.test(ans)){fb.className='fb ok';fb.textContent='Excellent! The height is always perpendicular (90°) to the base — the set square fits perfectly every time!';revealMystery(2);const nx=el('nx2');if(nx)nx.style.display='inline-block';}
+  else{fb.className='fb no';fb.textContent='Look at the set square corner — what angle did it show where H met the base? Try placing it again.';}
+}
+function chk3(){
+  const a=el('a3');const fb=el('fb3');if(!a||!fb)return;
+  const ans=a.value.trim().toLowerCase();
+  if(!ans){fb.className='fb ht';fb.textContent='Please write your answer first!';return;}
+  const isRight=/\btwo\b|\b2\b|triangle\s*2|triangle\s*two|second/.test(ans);
+  const isWrong=/not.?perp|not.?90|not.?right|diagonal|slant|wrong angle|not at 90|incorrect|not perpendicular/.test(ans);
+  if(isRight&&isWrong){fb.className='fb ok';fb.textContent='Spot on! Triangle 2 is wrong — its H is diagonal and does NOT meet the base at 90°. The set square corner does not fit!';revealMystery(3);const nx=el('nx3');if(nx)nx.style.display='inline-block';}
+  else if(isRight){fb.className='fb ht';fb.textContent='Good — you found the right triangle! But why is it wrong? What should happen where H meets the base?';}
+  else if(isWrong){fb.className='fb ht';fb.textContent='Good reasoning! Which triangle has that problem? (Write the triangle number)';}
+  else{fb.className='fb no';fb.textContent='Use the set square where H meets the base on each triangle. For one of them, the corner does not fit. Which triangle is it?';}
+}
+function hint(q){
+  if(q===2){hintQ2Glow();return;}
+  const ids={1:'fb1',3:'fb3'};
+  const msgs={
+    1:'Hint: Drag all three triangles on top of each other and rotate them. They are all identical! Does rotating change which side can be the base?',
+    3:'Hint: Use the set square where H meets the base on each triangle. For two of them the corner fits perfectly. For one it does not fit at all. Which triangle number is it?'
+  };
+  const fb=el(ids[q]);if(fb){fb.className='fb ht';fb.textContent=msgs[q];}
+}
+
+/* ═══════════════════════════
+   Q2 GATE
+   ═══════════════════════════ */
+function toggleSS(q){
+  const ss=q===2?ss2:ss3;ss.on=!ss.on;const b=el('ssBtn'+q);if(b){b.textContent=`📐 Set Square: ${ss.on?'ON':'OFF'}`;b.className='ctrl-btn'+(ss.on?' on':'');}
+  if(q===2){if(ctrl2)ctrl2.draw();}else{if(ctrl3)ctrl3.draw();}
+}
+
+/* ═══════════════════════════
+   NAV
+   ═══════════════════════════ */
+function go(q){
+  document.getElementById('s'+(q-1)).style.display='none';
+  document.getElementById('s'+q).style.display='block';
+  document.getElementById('sd'+(q-2)).className='sd done';
+  document.getElementById('sd'+(q-1)).className='sd active';
+  // step line ids: sl01, sl12
+  const slId=q===2?'sl01':'sl12';
+  document.getElementById(slId).className='sl done';
+  if(q===2)initQ2();if(q===3)initQ3();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function showDone(){
+  document.getElementById('s3').style.display='none';
+  document.getElementById('sd2').className='sd done';
+  document.getElementById('sDone').style.display='block';
+  revealMystery(3);
+  window.scrollTo({top:0,behavior:'smooth'});
+  setTimeout(launchConfetti, 400);
+}
+
+/* ═══════════════════════════
+   CONFETTI
+   ═══════════════════════════ */
+let confettiAnimId=null;
+const CONFETTI_COLORS=['#c8860a','#e8a020','#28a044','#2470cc','#e02020','#9c27b0','#f5c030'];
+
+function launchConfetti(){
+  const overlay=document.getElementById('confettiOverlay');
+  const canvas=document.getElementById('confettiCanvas');
+  overlay.style.display='block';
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+  const ctx=canvas.getContext('2d');
+
+  const pieces=Array.from({length:120},()=>({
+    x:Math.random()*canvas.width,
+    y:-20-Math.random()*200,
+    r:Math.random()*7+4,
+    col:CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)],
+    vx:(Math.random()-0.5)*4,
+    vy:Math.random()*3+2,
+    rot:Math.random()*Math.PI*2,
+    spin:(Math.random()-0.5)*.15,
+    shape:Math.random()>0.5?'rect':'circle',
+    w:Math.random()*10+6,
+    h:Math.random()*6+4
+  }));
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.spin;
+      if(p.y>canvas.height+20){p.y=-20;p.x=Math.random()*canvas.width;}
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+      ctx.fillStyle=p.col;ctx.globalAlpha=0.88;
+      if(p.shape==='circle'){ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);ctx.fill();}
+      else{ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);}
+      ctx.restore();
+    });
+    confettiAnimId=requestAnimationFrame(draw);
+  }
+  if(confettiAnimId)cancelAnimationFrame(confettiAnimId);
+  draw();
+}
+
+function closeConfetti(){
+  document.getElementById('confettiOverlay').style.display='none';
+  if(confettiAnimId){cancelAnimationFrame(confettiAnimId);confettiAnimId=null;}
+  document.getElementById('sDone').scrollIntoView({behavior:'smooth'});
+}
+
+
+initMystery();
+initQ1();
+</script>
+</body>
+</html>
