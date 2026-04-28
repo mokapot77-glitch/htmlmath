@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Triangle Quest</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  background:#0d0d1a;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  height:100dvh; overflow:hidden; touch-action:none; user-select:none;
+  font-family:'Trebuchet MS',sans-serif;
+}
+#gameWrap { position:relative; width:100%; max-width:1024px; }
+#hud {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 16px 4px; background:rgba(0,0,0,0.5);
+}
+#hud .score { font-size:18px; font-weight:700; color:#ffe066; letter-spacing:1px; }
+#hud .status { font-size:11px; color:#aaa; max-width:54%; text-align:center; line-height:1.4; }
+#hud button {
+  font-size:13px; padding:4px 14px; background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.25); color:#eee; border-radius:20px; cursor:pointer;
+}
+canvas#c  { display:block; width:100%; touch-action:none; }
+canvas#c2 { display:none;  width:100%; touch-action:none; }
+#controls {
+  position:absolute; bottom:0; left:0; right:0;
+  display:flex; justify-content:space-between; align-items:flex-end;
+  padding:10px 24px 18px; pointer-events:none;
+}
+.ctrl-zone {
+  pointer-events:all; position:relative; width:140px; height:140px; border-radius:50%;
+  background:rgba(255,255,255,0.06); border:2px solid rgba(255,255,255,0.12);
+  display:flex; align-items:center; justify-content:center;
+}
+.ctrl-label {
+  position:absolute; top:-22px; left:50%; transform:translateX(-50%);
+  font-size:11px; color:rgba(255,255,255,0.4); letter-spacing:1px; text-transform:uppercase; white-space:nowrap;
+}
+#leftStick {
+  width:58px; height:58px; border-radius:50%;
+  background:rgba(100,180,255,0.35); border:2px solid rgba(100,180,255,0.6);
+  position:absolute; pointer-events:none;
+}
+#rightZone { display:flex; flex-direction:column; align-items:center; gap:10px; pointer-events:none; }
+#jumpBtn {
+  width:100px; height:100px; border-radius:50%;
+  background:rgba(255,160,80,0.3); border:3px solid rgba(255,160,80,0.65);
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; color:rgba(255,200,80,0.9); font-weight:900;
+  transition:background 0.1s,transform 0.08s; pointer-events:all; cursor:pointer;
+}
+#jumpBtn.pressed { background:rgba(255,160,80,0.55); transform:scale(0.93); }
+#throwBtn {
+  width:72px; height:72px; border-radius:50%;
+  background:rgba(255,120,30,0.25); border:2.5px solid rgba(255,140,40,0.6);
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; color:rgba(255,180,60,0.9);
+  transition:background 0.1s,transform 0.08s; pointer-events:all; cursor:pointer;
+  opacity:0.3; pointer-events:none;
+}
+#throwBtn.active { opacity:1; pointer-events:all; }
+#throwBtn.pressed { background:rgba(255,120,30,0.55); transform:scale(0.93); }
+#overlay {
+  position:absolute; inset:0; background:rgba(0,0,0,0.6);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:12px; pointer-events:none; opacity:0; transition:opacity 0.3s;
+}
+#overlay.show { opacity:1; pointer-events:all; }
+#overlay h2 { font-size:34px; color:#ffe066; font-weight:800; text-shadow:0 2px 12px #ff8800; }
+#overlay p  { font-size:15px; color:#ccc; }
+#overlay button {
+  margin-top:8px; padding:10px 32px; font-size:16px; font-weight:700;
+  background:#ffe066; color:#1a1000; border:none; border-radius:24px; cursor:pointer;
+}
+#quizOverlay {
+  position:absolute; inset:0; background:rgba(4,8,18,0.95);
+  display:none; align-items:center; justify-content:center; z-index:20;
+}
+#quizOverlay.show { display:flex; }
+#quizCard {
+  background:#0c1624; border:1.5px solid #1e3a5a; border-radius:18px;
+  padding:14px 18px 16px; width:94%; max-width:580px;
+  display:flex; flex-direction:column; gap:10px;
+  box-shadow:0 10px 50px rgba(0,0,0,0.8);
+}
+#quizTitle  { font-size:16px; font-weight:700; color:#ffe066; }
+#quizHint   { font-size:12px; color:#60aadd; transition:color 0.4s; line-height:1.5; }
+#quizHint.ok { color:#4ade80; }
+#quizBody   { position:relative; width:100%; border-radius:10px; overflow:hidden; border:1px solid #1a3050; }
+canvas#gridCanvas { display:block; width:100%; }
+#setSqWrap  { position:absolute; width:88px; height:98px; cursor:grab; touch-action:none; left:14px; top:12px; }
+#setSqWrap:active { cursor:grabbing; }
+#setSqWrap svg { width:88px; height:98px; overflow:visible; }
+#quizQuestion { font-size:14px; color:#c8e4ff; text-align:center; padding:3px 0; line-height:1.9; }
+#blankBox {
+  display:inline-block; min-width:90px; border-bottom:2.5px solid #60aadd; color:#60aadd;
+  text-align:center; font-weight:700; font-size:14px; padding:0 5px; transition:all 0.5s;
+}
+#blankBox.revealed { color:#4ade80; border-color:#4ade80; font-size:16px; }
+#quizContinue {
+  align-self:center; padding:9px 26px; font-size:14px; font-weight:700;
+  background:#ffe066; color:#1a1000; border:none; border-radius:22px;
+  cursor:pointer; box-shadow:0 4px 18px rgba(255,200,50,0.35);
+}
+#codeOverlay {
+  position:absolute; inset:0; background:rgba(4,8,18,0.97);
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px; z-index:30;
+}
+#codeOverlay.show { display:flex; }
+#codeCard {
+  background:#0c1624; border:1.5px solid #2a4060; border-radius:20px;
+  padding:22px 26px; width:90%; max-width:460px;
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  box-shadow:0 10px 50px rgba(0,0,0,0.9);
+}
+#codeCard h2 { font-size:20px; color:#ffe066; font-weight:800; text-align:center; }
+.dino-emoji { font-size:54px; line-height:1; }
+#codeCard p { font-size:13px; color:#aac8e8; text-align:center; line-height:1.6; }
+#codeInput {
+  width:100%; padding:12px; font-size:22px; font-weight:700; text-align:center;
+  letter-spacing:4px; text-transform:uppercase;
+  background:#061020; border:2px solid #2a5080; border-radius:12px;
+  color:#ffe066; outline:none; font-family:'Trebuchet MS',sans-serif;
+  -webkit-user-select:text; user-select:text; touch-action:auto; position:relative; z-index:50;
+}
+#codeInput:focus { border-color:#60aadd; }
+#codeError { font-size:12px; color:#f87171; min-height:16px; text-align:center; }
+#codeSubmit {
+  padding:11px 32px; font-size:15px; font-weight:700;
+  background:#ffe066; color:#1a1000; border:none; border-radius:22px; cursor:pointer; width:100%;
+}
+/* Level 2 congratulations overlay */
+#l2CongratsOverlay {
+  position:absolute; inset:0; background:rgba(4,8,18,0.93);
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+  z-index:40; pointer-events:none;
+}
+#l2CongratsOverlay.show { display:flex; pointer-events:all; }
+#l2CongratsCard {
+  background:#0c1a10; border:2px solid #22cc88;
+  border-radius:22px; padding:28px 28px 22px;
+  width:88%; max-width:460px;
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  box-shadow:0 12px 60px rgba(34,204,136,0.25);
+  text-align:center;
+}
+#l2CongratsCard h2 { font-size:24px; color:#4ade80; font-weight:800; }
+#l2CongratsCard p  { font-size:14px; color:#c8f0dc; line-height:1.65; }
+#l2CongratsBtn {
+  padding:12px 36px; font-size:15px; font-weight:700;
+  background:#4ade80; color:#001a0a; border:none; border-radius:22px;
+  cursor:pointer; margin-top:4px;
+  box-shadow:0 4px 20px rgba(74,222,128,0.4);
+}
+
+/* Level 2 UI */
+#lvl2Ui {
+  position:absolute; inset:0; display:none; pointer-events:none; z-index:5;
+}
+#lvl2Ui.show { display:block; }
+#l2SqWrap {
+  position:absolute; width:76px; height:86px;
+  top:12px; left:18px;
+  cursor:grab; touch-action:none; pointer-events:all;
+}
+#l2SqWrap:active { cursor:grabbing; }
+#l2SqWrap svg { width:76px; height:86px; overflow:visible; }
+#l2SqWrap.snapped { filter:drop-shadow(0 0 8px #4ade80); }
+#lvl2Panel {
+  position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+  background:rgba(8,18,36,0.92); border:1px solid #2a5080; border-radius:16px;
+  padding:10px 16px; text-align:center; width:90%; max-width:580px;
+  pointer-events:all;
+}
+#lvl2Prompt { font-size:12px; color:#c8e4ff; line-height:1.5; margin-bottom:8px; }
+#lvl2BtnRow { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+.vtxBtn {
+  padding:9px 18px; font-size:13px; font-weight:700;
+  border:none; border-radius:16px; cursor:pointer; transition:transform 0.08s;
+}
+.vtxBtn:active { transform:scale(0.94); }
+.vtxBtn:disabled { opacity:0.38; cursor:default; }
+#btnLeft   { background:#fbbf24; color:#1a0a00; }
+#btnRight  { background:#60c8ff; color:#001a2a; }
+#btnC      { background:#4ade80; color:#001a0a; }
+#btnReveal { background:#a78bfa; color:#1a0030; }
+</style>
+</head>
+<body>
+<div id="gameWrap">
+  <div id="hud">
+    <div class="score">⭐ <span id="scoreVal">0</span></div>
+    <div class="status" id="statusMsg">Hit the ? brick!</div>
+    <button id="restartBtn">Restart</button>
+  </div>
+  <canvas id="c"></canvas>
+  <canvas id="c2"></canvas>
+
+  <div id="controls">
+    <div class="ctrl-zone" id="leftZone">
+      <span class="ctrl-label">Move</span>
+      <div id="leftStick"></div>
+    </div>
+    <div id="rightZone">
+      <div id="throwBtn">🔺</div>
+      <div id="jumpBtn">▲</div>
+    </div>
+  </div>
+
+  <div id="overlay">
+    <h2 id="overlayTitle"></h2>
+    <p  id="overlayMsg"></p>
+    <button id="overlayBtn">Play Again</button>
+  </div>
+
+  <div id="quizOverlay">
+    <div id="quizCard">
+      <div>
+        <div id="quizTitle">Triangle Challenge!</div>
+        <div id="quizHint">Drag the set square to where the height meets the base</div>
+      </div>
+      <div id="quizBody">
+        <canvas id="gridCanvas"></canvas>
+        <div id="setSqWrap">
+          <svg viewBox="0 0 80 88" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="6,76 74,76 6,8" fill="rgba(80,180,255,0.13)" stroke="#60c8ff" stroke-width="2.5" stroke-linejoin="round"/>
+            <polyline points="6,64 18,64 18,76" fill="none" stroke="#60c8ff" stroke-width="2"/>
+            <text x="40" y="88" text-anchor="middle" font-size="9.5" fill="#60c8ff" font-family="Trebuchet MS,sans-serif" font-style="italic">set square</text>
+          </svg>
+        </div>
+      </div>
+      <div id="quizQuestion">The height is <span id="blankBox">____</span> to the base.</div>
+      <button id="quizContinue" style="display:none;">Continue ▶</button>
+    </div>
+  </div>
+
+  <div id="codeOverlay">
+    <div id="codeCard">
+      <div class="dino-emoji">🦕</div>
+      <h2>You unlocked Dino form!</h2>
+      <p>Solve your worksheet to get the secret code, then enter it below!</p>
+      <input id="codeInput" type="text" maxlength="6" placeholder="______"
+        autocomplete="off" autocorrect="off" autocapitalize="characters"
+        spellcheck="false" inputmode="text"/>
+      <div id="codeError"></div>
+      <button id="codeSubmit">Unlock ▶</button>
+    </div>
+  </div>
+
+  <div id="lvl2Ui">
+    <!-- Draggable set square for level 2 -->
+    <div id="l2SqWrap">
+      <svg viewBox="0 0 80 88" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="6,76 74,76 6,8" fill="rgba(80,180,255,0.15)" stroke="#60c8ff" stroke-width="2.5" stroke-linejoin="round"/>
+        <polyline points="6,64 18,64 18,76" fill="none" stroke="#60c8ff" stroke-width="2"/>
+        <text x="40" y="88" text-anchor="middle" font-size="9.5" fill="#60c8ff" font-family="Trebuchet MS,sans-serif" font-style="italic">set square</text>
+      </svg>
+    </div>
+    <div id="lvl2Panel">
+      <div id="lvl2Prompt">🦕 First, drag the set square to find where the height meets the base!</div>
+      <div id="lvl2BtnRow">
+        <button class="vtxBtn" id="btnLeft">A — walk to corner A</button>
+        <button class="vtxBtn" id="btnRight">B — walk to corner B</button>
+        <button class="vtxBtn" id="btnC" style="display:none;">C — straight down ▶</button>
+        <button class="vtxBtn" id="btnReveal" style="display:none;">What did the dino draw? ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Level 2 congratulations overlay -->
+  <div id="l2CongratsOverlay">
+    <div id="l2CongratsCard">
+      <div style="font-size:52px;line-height:1;">🦕🎉</div>
+      <h2>Congratulations!</h2>
+      <p>Hope you know the relationship between the base and height of triangles now!</p>
+      <p style="font-size:12px;color:#60aadd;margin-top:4px;">The height is always perpendicular (90°) to the base — no matter what type of triangle!</p>
+      <button id="l2CongratsBtn">Play Again ▶</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════ CANVAS SETUP ════════════════════
+const canvas=document.getElementById('c'),   ctx=canvas.getContext('2d');
+const canvas2=document.getElementById('c2'), ctx2=canvas2.getContext('2d');
+let currentLevel=1;
+
+function resize(){
+  const hudH=document.getElementById('hud').offsetHeight;
+  const availH=window.innerHeight-hudH;
+  const maxW=Math.min(window.innerWidth,1024);
+  const ratio=680/380;
+  let w=maxW,h=w/ratio;
+  if(h>availH){h=availH;w=h*ratio;}
+  const rw=Math.round(w),rh=Math.round(h);
+  canvas.width=rw; canvas.height=rh;
+  canvas2.width=rw; canvas2.height=rh;
+  document.getElementById('gameWrap').style.width=rw+'px';
+}
+resize();
+window.addEventListener('resize',()=>{resize();if(currentLevel===1)initGame();else initLevel2();});
+
+const SC=()=>canvas.width/680;
+const BASE_W=680,BASE_H=380,GRAVITY=0.52,JUMP_V=-13.5,SPEED=4.2;
+const GROUND_Y=()=>BASE_H-52;
+const BRICK_W=40,BRICK_H=22;
+const BIG_BOX_W=72,BIG_BOX_H=72,BIG_BOX_HP=5;
+
+// ═══════════════════ LEVEL 1 STATE ════════════════════
+let score,player,bricks,bigBox,triItem,projectiles,particles,platforms,camera,phase,animT,quizType;
+
+function initGame(){
+  currentLevel=1;
+  canvas.style.display='block'; canvas2.style.display='none';
+  document.getElementById('controls').style.display='flex';
+  document.getElementById('lvl2Ui').classList.remove('show');
+  score=0;phase='play';animT=0;quizType=null;
+  document.getElementById('scoreVal').textContent='0';
+  document.getElementById('statusMsg').textContent='Hit the ? brick!';
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('quizOverlay').classList.remove('show');
+  document.getElementById('codeOverlay').classList.remove('show');
+  document.getElementById('throwBtn').classList.remove('active');
+  document.getElementById('codeInput').value='';
+  document.getElementById('codeError').textContent='';
+
+  const GY=GROUND_Y();
+  player={x:80,y:GY-40,w:28,h:40,vx:0,vy:0,onGround:true,dir:1,frame:0,frameT:0,
+          big:false,canThrow:false,isDino:false,growAnim:0,throwCooldown:0};
+  camera={x:0};
+
+  platforms=[
+    {x:0,   y:GY,     w:6000,h:60},
+    {x:280, y:GY-90,  w:130, h:16},
+    {x:560, y:GY-140, w:130, h:16},
+    {x:840, y:GY-90,  w:150, h:16},
+    {x:1080,y:GY-150, w:130, h:16},
+    {x:1360,y:GY-95,  w:170, h:16},
+  ];
+
+  const qG=[
+    {cx:360, y:GY-190},{cx:720, y:GY-220},{cx:960, y:GY-210},
+    {cx:1200,y:GY-280},{cx:1460,y:GY-240},
+  ];
+  bricks=[];
+  qG.forEach((g,i)=>{
+    bricks.push({x:g.cx-BRICK_W-2,y:g.y,type:'normal',hit:false,bounceT:0});
+    const qt=i===0?'question1':i===1?'question2':'normal_extra';
+    bricks.push({x:g.cx,y:g.y,type:qt,hit:false,bounceT:0});
+    bricks.push({x:g.cx+BRICK_W+2,y:g.y,type:'normal',hit:false,bounceT:0});
+  });
+
+  bigBox={x:1750,y:GY-BIG_BOX_H,hp:BIG_BOX_HP,broken:false,shakeT:0};
+  triItem=null;projectiles=[];particles=[];
+}
+
+// ═══════════════════ INPUT ════════════════════
+const input={vx:0,jump:false,jumpConsumed:false,throw:false,throwConsumed:false};
+const keys={};
+document.addEventListener('keydown',e=>{
+  if(document.activeElement===document.getElementById('codeInput'))return;
+  keys[e.code]=true;
+  if(['Space','ArrowUp','ArrowLeft','ArrowRight','KeyZ'].includes(e.code))e.preventDefault();
+});
+document.addEventListener('keyup',e=>{keys[e.code]=false;});
+
+const leftZone=document.getElementById('leftZone');
+const leftStick=document.getElementById('leftStick');
+let ljTouch=null,ljBase={x:0,y:0};
+const LJR=55;
+leftZone.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const t=e.changedTouches[0];ljTouch=t.identifier;
+  const r=leftZone.getBoundingClientRect();
+  ljBase={x:r.left+r.width/2,y:r.top+r.height/2};lj(t);
+},{passive:false});
+leftZone.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===ljTouch)lj(t);},{passive:false});
+['touchend','touchcancel'].forEach(ev=>leftZone.addEventListener(ev,e=>{
+  e.preventDefault();
+  for(const t of e.changedTouches)if(t.identifier===ljTouch){ljTouch=null;input.vx=0;leftStick.style.transform='translate(-50%,-50%)';}
+},{passive:false}));
+function lj(t){
+  let dx=t.clientX-ljBase.x,dy=t.clientY-ljBase.y;
+  const d=Math.sqrt(dx*dx+dy*dy);if(d>LJR){dx=dx/d*LJR;dy=dy/d*LJR;}
+  leftStick.style.left='50%';leftStick.style.top='50%';
+  leftStick.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+  input.vx=dx/LJR;
+}
+const jumpBtn=document.getElementById('jumpBtn');
+jumpBtn.addEventListener('touchstart',e=>{e.preventDefault();if(!input.jumpConsumed)input.jump=true;jumpBtn.classList.add('pressed');},{passive:false});
+jumpBtn.addEventListener('touchend',e=>{e.preventDefault();input.jump=false;input.jumpConsumed=false;jumpBtn.classList.remove('pressed');},{passive:false});
+const throwBtn=document.getElementById('throwBtn');
+throwBtn.addEventListener('touchstart',e=>{e.preventDefault();if(!input.throwConsumed)input.throw=true;throwBtn.classList.add('pressed');},{passive:false});
+throwBtn.addEventListener('touchend',e=>{e.preventDefault();input.throw=false;input.throwConsumed=false;throwBtn.classList.remove('pressed');},{passive:false});
+function kbThrow(){return keys['KeyZ']||keys['ShiftLeft'];}
+
+// ═══════════════════ PARTICLES ════════════════════
+function spawnP(x,y,colors,n=8){
+  for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*6,vy:-Math.random()*6-2,life:1,r:3+Math.random()*3,color:colors[i%colors.length]});
+}
+
+// ═══════════════════ GAME LOGIC ════════════════════
+function hitBrick(b){
+  if(b.hit)return;b.hit=true;b.bounceT=1;
+  if(b.type==='normal'||b.type==='normal_extra'){
+    score+=10;document.getElementById('scoreVal').textContent=score;
+    spawnP(b.x+BRICK_W/2,b.y,['#c8640a','#e6a020','#f0c060'],6);
+  }else if(b.type==='question1'){
+    spawnP(b.x+BRICK_W/2,b.y,['#ffe066','#ffd700','#fff4a0'],10);
+    triItem={x:b.x+BRICK_W/2-14,y:b.y-30,vy:-9,vx:0,collected:false,bobT:0,size:28,kind:'right'};
+    document.getElementById('statusMsg').textContent='Grab the right-angle △!';
+  }else if(b.type==='question2'){
+    spawnP(b.x+BRICK_W/2,b.y,['#ff8c00','#ffa040','#ffcc80'],10);
+    triItem={x:b.x+BRICK_W/2-14,y:b.y-30,vy:-9,vx:0,collected:false,bobT:0,size:28,kind:'acute'};
+    document.getElementById('statusMsg').textContent='Grab the acute △!';
+  }
+}
+function hitBigBox(){
+  if(bigBox.broken)return;
+  bigBox.hp--;bigBox.shakeT=12;
+  spawnP(bigBox.x+BIG_BOX_W/2,bigBox.y+BIG_BOX_H/2,['#ffe066','#ffaa00','#fff4a0'],8);
+  document.getElementById('statusMsg').textContent=`Big box: ${bigBox.hp} hit${bigBox.hp===1?'':'s'} left!`;
+  if(bigBox.hp<=0){
+    bigBox.broken=true;
+    spawnP(bigBox.x+BIG_BOX_W/2,bigBox.y+BIG_BOX_H/2,['#ffe066','#ffaa00','#ff6600','#fff'],20);
+    triItem={x:bigBox.x+BIG_BOX_W/2-18,y:bigBox.y-10,vy:-10,vx:0,collected:false,bobT:0,size:36,kind:'obtuse'};
+    document.getElementById('statusMsg').textContent='Grab the obtuse △!';
+  }
+}
+function doThrow(){
+  if(!player.canThrow||player.throwCooldown>0)return;
+  player.throwCooldown=22;
+  projectiles.push({x:player.x+player.w/2,y:player.y+player.h*0.3,vx:player.dir*9,vy:-2,life:1,size:18,rot:0});
+  spawnP(player.x+player.w/2,player.y+player.h*0.3,['#ff8c00','#ffa040'],4);
+}
+
+// ═══════════════════ UPDATE ════════════════════
+function update(){
+  animT++;
+  if(phase==='quiz'||phase==='dead'||phase==='dino_code'||phase==='win')return;
+
+  const kbVx=(keys['ArrowLeft']||keys['KeyA'])?-1:(keys['ArrowRight']||keys['KeyD'])?1:0;
+  const kbJump=keys['Space']||keys['ArrowUp']||keys['KeyW'];
+  const moveX=(Math.abs(input.vx)>0.05?input.vx:kbVx)*SPEED;
+  const jumping=input.jump||kbJump;
+
+  if(phase==='grow'||phase==='grow2'||phase==='grow3'){
+    player.growAnim=Math.min(1,player.growAnim+0.025);
+    const pc=phase==='grow'?['#a57aff','#6a4eff','#ffe066']:phase==='grow2'?['#ff8c00','#ffa040','#ffe066']:['#22cc88','#44ff99','#ffe066'];
+    spawnP(player.x+player.w/2,player.y+player.h/2,pc,2);
+    if(player.growAnim>=1){
+      player.big=true;
+      if(phase==='grow'){player.w=34;player.h=48;}
+      else if(phase==='grow2'){player.canThrow=true;document.getElementById('throwBtn').classList.add('active');}
+      const GY2=GROUND_Y();if(player.y+player.h>GY2)player.y=GY2-player.h;
+      const finalQt=phase==='grow'?'right':phase==='grow2'?'acute':'obtuse';
+      phase='quiz';quizType=finalQt;showQuiz(finalQt);
+    }
+    for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vy+=0.25;p.life-=0.025;}
+    particles.splice(0,particles.length,...particles.filter(p=>p.life>0));
+    camera.x=Math.max(0,player.x-200);
+    if(bigBox.shakeT>0)bigBox.shakeT--;
+    return;
+  }
+
+  if(moveX!==0){player.vx=moveX;player.dir=moveX>0?1:-1;}else player.vx*=0.7;
+  if(jumping&&player.onGround&&!input.jumpConsumed){player.vy=JUMP_V;player.onGround=false;input.jumpConsumed=true;}
+  if(!jumping)input.jumpConsumed=false;
+  const wantThrow=(input.throw&&!input.throwConsumed)||kbThrow();
+  if(wantThrow){doThrow();input.throwConsumed=true;}
+  if(!input.throw&&!kbThrow())input.throwConsumed=false;
+  if(player.throwCooldown>0)player.throwCooldown--;
+
+  player.vy+=GRAVITY;player.x+=player.vx;player.y+=player.vy;player.onGround=false;
+
+  for(const p of platforms){
+    if(player.x+player.w>p.x&&player.x<p.x+p.w){
+      if(player.vy>=0&&player.y+player.h>=p.y&&player.y+player.h<p.y+p.h+14){
+        player.y=p.y-player.h;player.vy=0;player.onGround=true;
+      }
+    }
+  }
+  for(const b of bricks){
+    if(!b.hit&&player.x+player.w>b.x+2&&player.x<b.x+BRICK_W-2&&player.y<b.y+BRICK_H&&player.y>b.y-14&&player.vy<0){
+      player.vy=3;hitBrick(b);
+    }
+    if(b.bounceT>0)b.bounceT-=0.08;
+  }
+  if(!bigBox.broken){
+    for(const pr of projectiles){
+      if(pr.life>0&&pr.x>bigBox.x&&pr.x<bigBox.x+BIG_BOX_W&&pr.y>bigBox.y&&pr.y<bigBox.y+BIG_BOX_H){pr.life=0;hitBigBox();}
+    }
+  }
+  if(bigBox.shakeT>0)bigBox.shakeT--;
+
+  if(triItem&&!triItem.collected){
+    triItem.vy+=GRAVITY*0.55;triItem.y+=triItem.vy;triItem.x+=triItem.vx;triItem.bobT+=0.06;
+    for(const p of platforms){
+      if(triItem.x+triItem.size>p.x&&triItem.x<p.x+p.w&&triItem.y+triItem.size>=p.y&&triItem.vy>0){
+        triItem.y=p.y-triItem.size;triItem.vy=-triItem.vy*0.35;
+      }
+    }
+    if(triItem.y>BASE_H+60)triItem.collected=true;
+    const bob=Math.sin(triItem.bobT)*4;
+    if(player.x<triItem.x+triItem.size&&player.x+player.w>triItem.x&&
+       player.y<triItem.y+triItem.size+bob&&player.y+player.h>triItem.y+bob){
+      triItem.collected=true;score+=100;document.getElementById('scoreVal').textContent=score;
+      const phMap={right:'grow',acute:'grow2',obtuse:'grow3'};
+      const msgMap={right:'Power UP! 🔺',acute:'Acute Power UP! 🔶',obtuse:'Obtuse Power UP! 🔻'};
+      phase=phMap[triItem.kind];player.growAnim=0;
+      document.getElementById('statusMsg').textContent=msgMap[triItem.kind];
+      spawnP(player.x+player.w/2,player.y,['#a57aff','#ffe066','#4ade80','#fff'],18);
+    }
+  }
+
+  for(const pr of projectiles){pr.x+=pr.vx;pr.y+=pr.vy;pr.vy+=0.18;pr.rot+=0.25;pr.life-=0.012;if(pr.x<camera.x-80||pr.x>camera.x+BASE_W+80||pr.y>BASE_H+40)pr.life=0;}
+  projectiles.splice(0,projectiles.length,...projectiles.filter(p=>p.life>0));
+  for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vy+=0.25;p.life-=0.025;}
+  particles.splice(0,particles.length,...particles.filter(p=>p.life>0));
+  player.frameT++;if(player.frameT>8){player.frame=(player.frame+1)%2;player.frameT=0;}
+  camera.x=Math.max(0,player.x-200);
+
+  if(player.y>BASE_H+100){
+    phase='dead';
+    document.getElementById('overlayTitle').textContent='You fell!';
+    document.getElementById('overlayMsg').textContent=`Score: ${score}`;
+    document.getElementById('overlay').classList.add('show');
+  }
+}
+
+// ═══════════════════ LEVEL 1 DRAW ════════════════════
+function drawBg(){
+  const g=ctx.createLinearGradient(0,0,0,BASE_H);
+  g.addColorStop(0,'#1a2a4a');g.addColorStop(1,'#0d1a2e');
+  ctx.fillStyle=g;ctx.fillRect(0,0,BASE_W,BASE_H);
+  ctx.fillStyle='rgba(255,255,255,0.5)';
+  for(let i=0;i<40;i++){
+    const sx=((i*137+camera.x*0.05)%(BASE_W+80)+BASE_W+80)%(BASE_W+80)-40;
+    ctx.fillRect(sx,(i*53)%(BASE_H*0.6),i%3===0?2:1,i%3===0?2:1);
+  }
+}
+function drawGround(){
+  const GY=GROUND_Y();
+  // Tall green bar — fills from GY all the way to bottom of canvas
+  // Player feet rest exactly at GY
+  ctx.fillStyle='#2d5a1e';ctx.fillRect(0,GY,BASE_W,BASE_H-GY);
+  ctx.fillStyle='#4a8a2a';ctx.fillRect(0,GY,BASE_W,BASE_H-GY);
+  ctx.fillStyle='#5aaa32';ctx.fillRect(0,GY,BASE_W,8); // bright top strip
+}
+function drawPlatform(p){
+  const px=p.x-camera.x;
+  if(p.h<30){ctx.fillStyle='#3a7a22';ctx.fillRect(px,p.y,p.w,p.h);ctx.fillStyle='#52a030';ctx.fillRect(px,p.y,p.w,5);}
+}
+function drawBrick(b){
+  const bx=b.x-camera.x;
+  const bounce=b.bounceT>0?Math.sin(b.bounceT*Math.PI)*5:0;
+  const by=b.y-Math.abs(bounce);
+  const isQ2=b.type==='question2';
+  if(b.type==='normal'||b.type==='normal_extra'){
+    if(b.hit){ctx.globalAlpha=0.25;ctx.fillStyle='#666';ctx.fillRect(bx,by,BRICK_W,BRICK_H);ctx.globalAlpha=1;return;}
+    ctx.fillStyle='#b85c0a';ctx.fillRect(bx,by,BRICK_W,BRICK_H);
+    ctx.fillStyle='#d87020';ctx.fillRect(bx+2,by+2,BRICK_W-4,7);
+    ctx.fillStyle='#963d06';ctx.fillRect(bx,by+BRICK_H-3,BRICK_W,3);
+    ctx.strokeStyle='#7a2e04';ctx.lineWidth=1.2;ctx.strokeRect(bx+.6,by+.6,BRICK_W-1.2,BRICK_H-1.2);
+    ctx.beginPath();ctx.moveTo(bx,by+BRICK_H/2);ctx.lineTo(bx+BRICK_W,by+BRICK_H/2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bx+BRICK_W/2,by);ctx.lineTo(bx+BRICK_W/2,by+BRICK_H/2);ctx.stroke();
+  }else{
+    const pulse=Math.sin(animT*.07)*.15+.85;
+    const hue=isQ2?32:45;
+    if(b.hit){
+      ctx.fillStyle='#555';ctx.fillRect(bx,by,BRICK_W,BRICK_H);
+      ctx.fillStyle='#888';ctx.fillRect(bx+2,by+2,BRICK_W-4,4);
+      ctx.strokeStyle='#333';ctx.lineWidth=1.5;ctx.strokeRect(bx+.75,by+.75,BRICK_W-1.5,BRICK_H-1.5);
+      ctx.fillStyle='#666';ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+      ctx.fillText('?',bx+BRICK_W/2,by+BRICK_H-5);return;
+    }
+    ctx.fillStyle=`hsl(${hue},${80*pulse}%,${48*pulse}%)`;ctx.fillRect(bx,by,BRICK_W,BRICK_H);
+    ctx.fillStyle=`hsl(${hue},80%,65%)`;ctx.fillRect(bx+2,by+2,BRICK_W-4,6);
+    ctx.fillStyle=`hsl(${hue-10},70%,35%)`;ctx.fillRect(bx,by+BRICK_H-3,BRICK_W,3);
+    ctx.strokeStyle='#7a5500';ctx.lineWidth=1.5;ctx.strokeRect(bx+.75,by+.75,BRICK_W-1.5,BRICK_H-1.5);
+    ctx.fillStyle='#fff';ctx.font=`bold ${14+Math.sin(animT*.1)}px sans-serif`;ctx.textAlign='center';
+    ctx.shadowColor=isQ2?'rgba(255,140,30,0.8)':'rgba(255,220,50,0.8)';ctx.shadowBlur=8;
+    ctx.fillText('?',bx+BRICK_W/2,by+BRICK_H-5);ctx.shadowBlur=0;
+  }
+}
+function drawBigBox(){
+  if(bigBox.broken)return;
+  const shake=bigBox.shakeT>0?(Math.random()-.5)*4:0;
+  const bx=bigBox.x-camera.x+shake,by=bigBox.y+shake;
+  const W=BIG_BOX_W,H=BIG_BOX_H,pulse=Math.sin(animT*.06)*.12+.88,crackA=1-bigBox.hp/BIG_BOX_HP;
+  ctx.fillStyle=`hsl(45,${75*pulse}%,${45*pulse}%)`;ctx.fillRect(bx,by,W,H);
+  ctx.fillStyle=`hsl(45,78%,62%)`;ctx.fillRect(bx+3,by+3,W-6,12);
+  ctx.fillStyle=`hsl(35,65%,30%)`;ctx.fillRect(bx,by+H-5,W,5);
+  ctx.strokeStyle='#7a5500';ctx.lineWidth=2.5;ctx.strokeRect(bx+1,by+1,W-2,H-2);
+  ctx.strokeStyle='rgba(100,60,0,0.3)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(bx,by+H/2);ctx.lineTo(bx+W,by+H/2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(bx+W/2,by);ctx.lineTo(bx+W/2,by+H/2);ctx.stroke();
+  if(crackA>0.1){
+    ctx.globalAlpha=Math.min(1,crackA*1.5);ctx.strokeStyle='#3a1a00';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(bx+W*.3,by+H*.2);ctx.lineTo(bx+W*.5,by+H*.55);ctx.lineTo(bx+W*.2,by+H*.8);ctx.stroke();
+    if(crackA>0.4){ctx.beginPath();ctx.moveTo(bx+W*.65,by+H*.1);ctx.lineTo(bx+W*.8,by+H*.5);ctx.lineTo(bx+W*.6,by+H*.9);ctx.stroke();}
+    ctx.globalAlpha=1;
+  }
+  ctx.fillStyle='#fff';ctx.font=`bold ${22+Math.sin(animT*.08)*2}px sans-serif`;ctx.textAlign='center';
+  ctx.shadowColor='rgba(255,220,50,0.9)';ctx.shadowBlur=12;ctx.fillText('?',bx+W/2,by+H-14);ctx.shadowBlur=0;
+  for(let i=0;i<BIG_BOX_HP;i++){ctx.fillStyle=i<bigBox.hp?'#ffe066':'#333';ctx.beginPath();ctx.arc(bx+W/2+(i-2)*10,by+H+10,3.5,0,Math.PI*2);ctx.fill();}
+  if(bigBox.hp===BIG_BOX_HP&&player.canThrow){ctx.fillStyle='rgba(255,220,80,0.9)';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText('← Throw!',bx+W/2,by-16);}
+}
+function drawTriItem(){
+  if(!triItem||triItem.collected)return;
+  const tx=triItem.x-camera.x,s=triItem.size;
+  const bob=Math.sin(triItem.bobT)*4,ty=triItem.y+bob;
+  if(triItem.kind==='right'){
+    ctx.shadowColor='#8b5cf6';ctx.shadowBlur=14;ctx.fillStyle='#8b5cf6';
+    ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(tx,ty+s);ctx.lineTo(tx+s,ty+s);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='#c4b5fd';ctx.lineWidth=2;ctx.stroke();ctx.shadowBlur=0;
+    const m=7;ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.strokeRect(tx,ty+s-m,m,m);
+    ctx.fillStyle='#e0d0ff';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText('+100',tx+s/2,ty-6+bob);
+  }else if(triItem.kind==='acute'){
+    ctx.shadowColor='#ff8c00';ctx.shadowBlur=14;ctx.fillStyle='#ff8c00';
+    ctx.beginPath();ctx.moveTo(tx+s*.15,ty+s);ctx.lineTo(tx+s*.85,ty+s);ctx.lineTo(tx+s*.55,ty);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='#ffcc80';ctx.lineWidth=2;ctx.stroke();ctx.shadowBlur=0;
+    ctx.fillStyle='#ffe0a0';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText('+100',tx+s/2,ty-6+bob);
+  }else{
+    // Obtuse: wide, flat, one angle clearly >90°. Apex near right, base-left vertex is obtuse.
+    ctx.shadowColor='#22cc88';ctx.shadowBlur=14;ctx.fillStyle='#22cc88';
+    // Truly obtuse at vertex A: apex C is to the LEFT of A, making angle A > 90°
+    const Ax=tx+s*.25,  Ay=ty+s;    // bottom-left A (obtuse angle here)
+    const Bx=tx+s,      By=ty+s;    // bottom-right B
+    const Cx=tx,        Cy=ty+s*.2; // apex C — left of A, angle at A ≈ 115°
+    ctx.beginPath();ctx.moveTo(Ax,Ay);ctx.lineTo(Bx,By);ctx.lineTo(Cx,Cy);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='#80ffcc';ctx.lineWidth=2;ctx.stroke();ctx.shadowBlur=0;
+    ctx.fillStyle='#b0ffe0';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillText('+100',(Ax+Bx+Cx)/3,ty-6+bob);
+  }
+}
+function drawProjectiles(){
+  for(const pr of projectiles){
+    const tx=pr.x-camera.x,ty=pr.y;
+    ctx.save();ctx.translate(tx,ty);ctx.rotate(pr.rot);ctx.globalAlpha=pr.life;
+    ctx.fillStyle='#ff8c00';const s=pr.size;
+    ctx.beginPath();ctx.moveTo(0,-s*.55);ctx.lineTo(s*.45,s*.45);ctx.lineTo(-s*.45,s*.45);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='#ffcc80';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.globalAlpha=1;ctx.restore();
+  }
+}
+function drawDino(c,px,py,pw,ph,dir,frame,aura){
+  c.save();
+  c.translate(px+pw/2,py+ph);c.scale(1,1);c.translate(-pw/2,-ph);
+  if(dir<0){c.translate(pw,0);c.scale(-1,1);}
+  c.fillStyle='#22aa55';c.fillRect(2,10,pw-4,ph-18);
+  c.fillStyle='#2acc66';c.fillRect(pw*.3,0,pw*.65,18);
+  c.fillStyle='#fff';c.fillRect(pw*.7,3,7,7);
+  c.fillStyle='#111';c.fillRect(pw*.72,5,4,4);
+  c.fillStyle='#2acc66';c.fillRect(pw*.88,8,pw*.2,6);
+  c.fillStyle='#111';c.fillRect(pw*.9,10,pw*.15,2);
+  c.fillStyle='#18884a';
+  for(let i=0;i<4;i++){const sx=pw*.15+i*pw*.18;c.beginPath();c.moveTo(sx,10);c.lineTo(sx+5,0);c.lineTo(sx+10,10);c.fill();}
+  const lo=frame===0?0:3;
+  c.fillStyle='#18884a';c.fillRect(2,ph-14,pw/2-2,14);c.fillRect(pw/2+2,ph-14+lo,pw/2-4,11);
+  c.fillStyle='#0d6633';c.fillRect(0,ph-3,pw/2,3);c.fillRect(pw/2+2,ph-3+lo,pw/2-2,3);
+  c.fillStyle='#2acc66';c.fillRect(pw*.55,ph*.35,8,5);
+  c.fillStyle='#22aa55';c.beginPath();c.moveTo(2,ph*.4);c.lineTo(-pw*.4,ph*.6);c.lineTo(2,ph*.65);c.fill();
+  if(aura){c.strokeStyle='rgba(34,200,100,0.5)';c.lineWidth=3;c.strokeRect(-2,-2,pw+4,ph+4);}
+  c.restore();
+}
+function drawPlayer(){
+  let gs=1;
+  if(['grow','grow2','grow3'].includes(phase))gs=1+player.growAnim*.2;
+  else if(player.big)gs=1.2;
+  const pw=player.w,ph=player.h,px=player.x-camera.x,py=player.y;
+  if(player.isDino){
+    ctx.save();ctx.translate(px+pw/2,py+ph);ctx.scale(gs,gs);ctx.translate(-pw/2,-ph);
+    drawDino(ctx,0,0,pw,ph,player.dir,player.frame,true);
+    ctx.restore();
+  }else{
+    ctx.save();
+    ctx.translate(px+pw/2,py+ph);ctx.scale(gs,gs);ctx.translate(-pw/2,-ph);
+    if(player.dir<0){ctx.translate(pw,0);ctx.scale(-1,1);}
+    ctx.fillStyle='#e63b2e';ctx.beginPath();ctx.arc(pw/2,9,pw/2-1,Math.PI,0);ctx.fill();
+    ctx.fillStyle='#c22c20';ctx.fillRect(-3,9,pw+6,5);
+    ctx.fillStyle='#3355cc';ctx.fillRect(1,14,pw-2,ph*.48);
+    ctx.fillStyle='#f5c07a';ctx.fillRect(4,14,pw-10,ph*.3);
+    ctx.fillStyle='#222';ctx.fillRect(8,17,3,3);
+    ctx.fillStyle='#fff';ctx.fillRect(9,18,1.5,1.5);
+    ctx.fillStyle='#5a3010';ctx.fillRect(6,22,5,2);ctx.fillRect(12,22,5,2);
+    const lo=player.onGround&&player.frame===0?0:3;
+    ctx.fillStyle='#2244bb';ctx.fillRect(1,ph-14,pw/2-1,14);ctx.fillRect(pw/2+1,ph-14+lo,pw/2-2,14-lo);
+    ctx.fillStyle='#eee';ctx.fillRect(0,ph-3,pw/2,3);ctx.fillRect(pw/2+1,ph-3+lo,pw/2,3);
+    if(player.big||['grow','grow2','grow3'].includes(phase)){
+      const col=player.canThrow?'rgba(255,140,40,0.55)':'rgba(165,122,255,0.5)';
+      ctx.strokeStyle=col;ctx.lineWidth=3;ctx.strokeRect(-2,-2,pw+4,ph+4);
+    }
+    ctx.restore();
+  }
+}
+function drawParticles(){
+  for(const p of particles){ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x-camera.x,p.y,p.r,0,Math.PI*2);ctx.fill();}
+  ctx.globalAlpha=1;
+}
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const s=SC();ctx.save();ctx.scale(s,s);
+  drawBg();drawGround();
+  for(const p of platforms)drawPlatform(p);
+  for(const b of bricks)drawBrick(b);
+  drawBigBox();drawTriItem();drawProjectiles();drawPlayer();drawParticles();
+  if(['grow','grow2','grow3'].includes(phase)){
+    const col=phase==='grow3'?'rgba(34,180,80,0.12)':phase==='grow2'?'rgba(255,100,0,0.12)':'rgba(130,80,255,0.12)';
+    ctx.fillStyle=col;ctx.fillRect(0,0,BASE_W,BASE_H);
+    ctx.fillStyle='#fff';ctx.font='bold 22px sans-serif';ctx.textAlign='center';
+    const sc=phase==='grow3'?'#22cc88':phase==='grow2'?'#ff8c00':'#a57aff';
+    ctx.shadowColor=sc;ctx.shadowBlur=20;ctx.fillText('POWER UP!',BASE_W/2,BASE_H/2-20);ctx.shadowBlur=0;
+  }
+  ctx.restore();
+}
+function loop(){
+  if(currentLevel===1){update();draw();}
+  else{updateLevel2();drawLevel2();}
+  requestAnimationFrame(loop);
+}
+
+// ═══════════════════ QUIZ (L1) ════════════════════
+const gridCanvas=document.getElementById('gridCanvas');
+const gctx=gridCanvas.getContext('2d');
+const quizBody=document.getElementById('quizBody');
+const setSqWrap=document.getElementById('setSqWrap');
+const SQ_CX=(6/80)*88,SQ_CY=(76/88)*98;
+let targetZone={x:0,y:0,r:40},quizSolved=false,currentQuizType='right';
+
+function showQuiz(type){
+  currentQuizType=type;quizSolved=false;
+  const blank=document.getElementById('blankBox');
+  blank.textContent='____';blank.classList.remove('revealed');
+  document.getElementById('quizContinue').style.display='none';
+  document.getElementById('quizHint').classList.remove('ok');
+  document.getElementById('quizQuestion').innerHTML='The height is <span id="blankBox">____</span> to the base.';
+  const titles={right:'🔺 Right-Angle Triangle!',acute:'🔶 Acute Triangle!',obtuse:'🔻 Obtuse Triangle!'};
+  document.getElementById('quizTitle').textContent=titles[type];
+  document.getElementById('quizHint').textContent='Drag the set square to where the height meets the base';
+  document.getElementById('quizOverlay').classList.add('show');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    ({right:drawGridRight,acute:drawGridAcute,obtuse:drawGridObtuse}[type])();
+    resetSq();
+  }));
+}
+function setupGrid(){
+  const W=quizBody.clientWidth||480,H=Math.round(W*0.54);
+  gridCanvas.width=W;gridCanvas.height=H;gridCanvas.style.height=H+'px';
+  const CELL=Math.round(W/22);
+  gctx.fillStyle='#08111e';gctx.fillRect(0,0,W,H);
+  gctx.fillStyle='rgba(60,120,200,0.28)';
+  for(let x=0;x<=W;x+=CELL)for(let y=0;y<=H;y+=CELL)gctx.fillRect(x-1,y-1,2,2);
+  gctx.strokeStyle='rgba(60,120,200,0.10)';gctx.lineWidth=1;
+  for(let x=0;x<=W;x+=CELL){gctx.beginPath();gctx.moveTo(x,0);gctx.lineTo(x,H);gctx.stroke();}
+  for(let y=0;y<=H;y+=CELL){gctx.beginPath();gctx.moveTo(0,y);gctx.lineTo(W,y);gctx.stroke();}
+  return{W,H,CELL};
+}
+function triFill(verts,fc,sc){
+  gctx.fillStyle=fc;gctx.beginPath();gctx.moveTo(...verts[0]);
+  for(let i=1;i<verts.length;i++)gctx.lineTo(...verts[i]);
+  gctx.closePath();gctx.fill();
+  gctx.strokeStyle=sc;gctx.lineWidth=2.5;gctx.beginPath();gctx.moveTo(...verts[0]);
+  for(let i=1;i<verts.length;i++)gctx.lineTo(...verts[i]);
+  gctx.closePath();gctx.stroke();
+}
+function labelBase(Ax,Bx,Ay,C){
+  gctx.fillStyle='#fbbf24';gctx.font=`bold ${Math.round(C*.82)}px Trebuchet MS,sans-serif`;gctx.textAlign='center';
+  gctx.fillText('base',(Ax+Bx)/2,Ay+C*1.1);
+}
+function labelHeight(x,topY,botY,C,side){
+  const tx=side==='left'?x-C*1.0:x+C*1.3;
+  gctx.save();gctx.translate(tx,(topY+botY)/2);gctx.rotate(-Math.PI/2);
+  gctx.fillStyle='#34d399';gctx.font=`bold ${Math.round(C*.82)}px Trebuchet MS,sans-serif`;gctx.textAlign='center';
+  gctx.fillText('height',0,0);gctx.restore();
+}
+function storeRev(ox,oy,C,type,extra={}){
+  gridCanvas._ox=ox;gridCanvas._oy=oy;gridCanvas._CELL=C;gridCanvas._type=type;
+  Object.assign(gridCanvas,extra);
+}
+function drawGridRight(){
+  const{W,H,CELL:C}=setupGrid();
+  const ox=Math.round(W*.20),oy=Math.round(H*.84);
+  const Ax=ox,Ay=oy,Bx=ox+9*C,By=oy,Cx=ox,Cy=oy-7*C;
+  triFill([[Ax,Ay],[Bx,By],[Cx,Cy]],'rgba(139,92,246,0.2)','#a78bfa');
+  labelBase(Ax,Bx,Ay,C);
+  gctx.strokeStyle='#34d399';gctx.lineWidth=2;gctx.beginPath();gctx.moveTo(Ax,Cy);gctx.lineTo(Ax,Ay);gctx.stroke();
+  labelHeight(Ax,Cy,Ay,C,'left');
+  targetZone={x:Ax,y:Ay,r:C*1.9};storeRev(Ax,Ay,C,'right');
+}
+function drawGridAcute(){
+  const{W,H,CELL:C}=setupGrid();
+  const ox=Math.round(W*.16),oy=Math.round(H*.84);
+  const Ax=ox,Ay=oy,Bx=ox+10*C,By=oy,Cx=ox+4*C,Cy=oy-7*C;
+  const Fx=Cx,Fy=Ay;
+  triFill([[Ax,Ay],[Bx,By],[Cx,Cy]],'rgba(255,140,40,0.2)','#ffb060');
+  labelBase(Ax,Bx,Ay,C);
+  gctx.setLineDash([5,4]);gctx.strokeStyle='#34d399';gctx.lineWidth=2;
+  gctx.beginPath();gctx.moveTo(Cx,Cy);gctx.lineTo(Fx,Fy);gctx.stroke();gctx.setLineDash([]);
+  labelHeight(Fx,Cy,Fy,C,'left');
+  targetZone={x:Fx,y:Fy,r:C*1.9};storeRev(Fx,Fy,C,'acute',{_Fx:Fx,_Fy:Fy});
+}
+function drawGridObtuse(){
+  const{W,H,CELL:C}=setupGrid();
+  const ox=Math.round(W*.32),oy=Math.round(H*.82);
+  const Ax=ox,Ay=oy,Bx=ox+8*C,By=oy,Cx=ox-3*C,Cy=oy-5*C;
+  const Fx=Cx,Fy=Ay;
+  gctx.setLineDash([5,4]);gctx.strokeStyle='#fbbf24';gctx.lineWidth=2;
+  gctx.beginPath();gctx.moveTo(Fx-C*.2,Fy);gctx.lineTo(Ax,Ay);gctx.stroke();gctx.setLineDash([]);
+  triFill([[Ax,Ay],[Bx,By],[Cx,Cy]],'rgba(34,180,80,0.2)','#4ade80');
+  labelBase(Ax,Bx,Ay,C);
+  gctx.setLineDash([5,4]);gctx.strokeStyle='#34d399';gctx.lineWidth=2;
+  gctx.beginPath();gctx.moveTo(Cx,Cy);gctx.lineTo(Fx,Fy);gctx.stroke();gctx.setLineDash([]);
+  labelHeight(Fx,Cy,Fy,C,'left');
+  gctx.fillStyle='rgba(251,191,36,0.7)';gctx.font=`${Math.round(C*.68)}px Trebuchet MS,sans-serif`;gctx.textAlign='center';
+  gctx.fillText('extended base',(Fx+Ax)/2,Fy+C*1.55);
+  targetZone={x:Fx,y:Fy,r:C*2.0};storeRev(Fx,Fy,C,'obtuse',{_Fx:Fx,_Fy:Fy});
+}
+function revealMark(Fx,Fy,C){
+  const m=C*.7;
+  gctx.strokeStyle='#fff';gctx.lineWidth=2.2;
+  gctx.beginPath();gctx.moveTo(Fx+m,Fy);gctx.lineTo(Fx+m,Fy-m);gctx.lineTo(Fx,Fy-m);gctx.stroke();
+  gctx.fillStyle='rgba(90,255,160,0.15)';gctx.fillRect(Fx,Fy-m,m,m);
+}
+function resetSq(){setSqWrap.style.left='12px';setSqWrap.style.top='10px';}
+let drag=null;
+function getSqPt(){
+  const sr=setSqWrap.getBoundingClientRect(),br=quizBody.getBoundingClientRect();
+  return{x:sr.left-br.left+SQ_CX,y:sr.top-br.top+SQ_CY};
+}
+function moveSq(cx,cy){
+  if(!drag)return;
+  const br=quizBody.getBoundingClientRect();
+  let nx=cx-drag.ox-br.left,ny=cy-drag.oy-br.top;
+  nx=Math.max(-10,Math.min(br.width-55,nx));ny=Math.max(-10,Math.min(br.height-55,ny));
+  setSqWrap.style.left=nx+'px';setSqWrap.style.top=ny+'px';checkSolved();
+}
+setSqWrap.addEventListener('mousedown',e=>{e.preventDefault();const r=setSqWrap.getBoundingClientRect();drag={ox:e.clientX-r.left,oy:e.clientY-r.top};});
+document.addEventListener('mousemove',e=>{if(drag)moveSq(e.clientX,e.clientY);});
+document.addEventListener('mouseup',()=>{drag=null;});
+setSqWrap.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0],r=setSqWrap.getBoundingClientRect();drag={ox:t.clientX-r.left,oy:t.clientY-r.top};},{passive:false});
+setSqWrap.addEventListener('touchmove',e=>{e.preventDefault();if(drag)moveSq(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+setSqWrap.addEventListener('touchend',()=>{drag=null;});
+function checkSolved(){
+  if(quizSolved)return;
+  const c=getSqPt();
+  if(Math.hypot(c.x-targetZone.x,c.y-targetZone.y)<targetZone.r)revealAnswer();
+}
+function revealAnswer(){
+  quizSolved=true;
+  const blank=document.getElementById('blankBox'),hint=document.getElementById('quizHint');
+  blank.textContent='perpendicular (90°)';blank.classList.add('revealed');
+  const msgs={
+    right:'✓ The height meets the base at exactly 90° — they are perpendicular!',
+    acute:'✓ The height meets the base at 90° — they are perpendicular, even in an acute triangle!',
+    obtuse:'✓ The height meets the extended base at 90° — perpendicular, even in an obtuse triangle!'
+  };
+  hint.textContent=msgs[currentQuizType];hint.classList.add('ok');
+  const Fx=gridCanvas._Fx!==undefined?gridCanvas._Fx:gridCanvas._ox;
+  const Fy=gridCanvas._Fy!==undefined?gridCanvas._Fy:gridCanvas._oy;
+  revealMark(Fx,Fy,gridCanvas._CELL);
+  setTimeout(()=>{document.getElementById('quizContinue').style.display='block';},700);
+}
+document.getElementById('quizContinue').addEventListener('click',()=>{
+  document.getElementById('quizOverlay').classList.remove('show');
+  if(currentQuizType==='obtuse'){
+    player.isDino=true;player.w=48;player.h=56;
+    const GYq=GROUND_Y();if(player.y+player.h>GYq)player.y=GYq-player.h;
+    phase='dino_code';showCodeOverlay();
+  }else{
+    phase='play';
+    const msgs={right:'Now find the acute △ power-up!',acute:'Throw triangles at the big ? box!'};
+    document.getElementById('statusMsg').textContent=msgs[currentQuizType]||'Keep going!';
+  }
+});
+
+// ═══════════════════ CODE OVERLAY ════════════════════
+const SECRET_CODE='AXBYCZ';
+function showCodeOverlay(){
+  document.getElementById('codeOverlay').classList.add('show');
+  document.getElementById('statusMsg').textContent="You're a dinosaur! Enter the worksheet code!";
+  setTimeout(()=>document.getElementById('codeInput').focus(),400);
+}
+document.getElementById('codeInput').addEventListener('input',e=>{
+  e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  document.getElementById('codeError').textContent='';
+});
+document.getElementById('codeSubmit').addEventListener('click',checkCode);
+document.getElementById('codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')checkCode();});
+function checkCode(){
+  const val=document.getElementById('codeInput').value.trim().toUpperCase();
+  if(val===SECRET_CODE){
+    document.getElementById('codeOverlay').classList.remove('show');
+    for(let i=0;i<5;i++){
+      setTimeout(()=>spawnP(player.x+player.w/2,player.y-20,['#22cc88','#44ff99','#ffe066','#fff','#ff8c00','#a57aff'],10),i*150);
+    }
+    setTimeout(startLevel2,900);
+  }else{
+    document.getElementById('codeError').textContent='Wrong code — check your worksheet and try again!';
+    document.getElementById('codeInput').value='';
+  }
+}
+
+// ═══════════════════ LEVEL 2 ════════════════════
+// l2.state: 'sq_drag' → 'choose' → 'moving_wrong' → 'choose' (loop) → 'moving_right' → 'arrived' → 'revealed'
+let l2={Ax:0,Ay:0,Bx:0,By:0,Cx:0,Cy:0,Fx:0,Fy:0,
+        dinoX:0,dinoY:0,targetX:0,targetY:0,
+        state:'sq_drag',trailPts:[],animT:0,dinoFrame:0,dinoFrameT:0,
+        errorTimer:0,sqSnapped:false,wrongTrailPts:[]};
+
+// Set square drag for Level 2 (separate from quiz set square)
+const l2Sq=document.getElementById('l2SqWrap');
+// Right-angle corner of svg at (6,76) in viewBox 80x88 → rendered 76x86px
+const L2SQ_CX=(6/80)*76, L2SQ_CY=(76/88)*86;
+let l2drag=null;
+
+function l2SqCorner(){
+  const sr=l2Sq.getBoundingClientRect();
+  const cr=canvas2.getBoundingClientRect();
+  // Convert to BASE_W coords
+  const s=BASE_W/canvas2.width;
+  return{
+    x:(sr.left-cr.left+L2SQ_CX)*s,
+    y:(sr.top-cr.top +L2SQ_CY)*s
+  };
+}
+function moveL2Sq(cx,cy){
+  if(!l2drag)return;
+  const cr=canvas2.getBoundingClientRect();
+  const nx=cx-l2drag.ox-cr.left, ny=cy-l2drag.oy-cr.top;
+  l2Sq.style.left=Math.max(-10,Math.min(cr.width-40,nx))+'px';
+  l2Sq.style.top =Math.max(-10,Math.min(cr.height-40,ny))+'px';
+  checkL2Snap();
+}
+l2Sq.addEventListener('mousedown',e=>{e.preventDefault();const r=l2Sq.getBoundingClientRect();l2drag={ox:e.clientX-r.left,oy:e.clientY-r.top};});
+document.addEventListener('mousemove',e=>{if(l2drag)moveL2Sq(e.clientX,e.clientY);});
+document.addEventListener('mouseup',()=>{l2drag=null;});
+l2Sq.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0],r=l2Sq.getBoundingClientRect();l2drag={ox:t.clientX-r.left,oy:t.clientY-r.top};},{passive:false});
+l2Sq.addEventListener('touchmove',e=>{e.preventDefault();if(l2drag)moveL2Sq(e.touches[0].clientX,e.touches[0].clientY);},{passive:false});
+l2Sq.addEventListener('touchend',()=>{l2drag=null;});
+
+function checkL2Snap(){
+  if(l2.state!=='sq_drag'&&l2.state!=='choose')return;
+  const pt=l2SqCorner();
+  const s=BASE_W/canvas2.width;
+  const snapR=30*s;
+  if(Math.hypot(pt.x-l2.Fx,pt.y-l2.Fy)<snapR){
+    if(!l2.sqSnapped){
+      l2.sqSnapped=true;
+      l2Sq.classList.add('snapped');
+      l2.state='choose';
+      document.getElementById('btnC').style.display='';
+      document.getElementById('lvl2Prompt').textContent=
+        '✓ Set square placed at the right angle corner!\nNow choose where the dino should walk: A, B, or C.';
+    }
+  } else {
+    if(l2.sqSnapped&&(l2.state==='sq_drag'||l2.state==='choose')){
+      l2.sqSnapped=false;
+      l2Sq.classList.remove('snapped');
+      l2.state='sq_drag';
+      document.getElementById('btnC').style.display='none';
+      document.getElementById('lvl2Prompt').textContent=
+        '🦕 Drag the set square to find the foot of the height, then choose where the dino should walk!';
+    }
+  }
+}
+
+function startLevel2(){
+  currentLevel=2;
+  canvas.style.display='none';canvas2.style.display='block';
+  document.getElementById('controls').style.display='none';
+  document.getElementById('lvl2Ui').classList.add('show');
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('statusMsg').textContent='Level 2 — Where does the height land?';
+  initLevel2();
+}
+
+function initLevel2(){
+  const CELL=28;
+  const midX=BASE_W/2, baseY=BASE_H*.74;
+  const halfBase=5*CELL, hgt=6*CELL;
+  l2.Ax=midX-halfBase; l2.Ay=baseY;
+  l2.Bx=midX+halfBase; l2.By=baseY;
+  l2.Cx=midX+CELL;     l2.Cy=baseY-hgt;
+  l2.Fx=l2.Cx; l2.Fy=l2.Ay;  // foot of height (horizontal base → directly below vertex C)
+  l2.dinoX=l2.Cx; l2.dinoY=l2.Cy;
+  l2.targetX=l2.Cx; l2.targetY=l2.Cy;
+  l2.state='sq_drag'; l2.trailPts=[]; l2.wrongTrailPts=[];
+  l2.animT=0; l2.dinoFrame=0; l2.dinoFrameT=0;
+  l2.errorTimer=0; l2.sqSnapped=false;
+  // Reset set square position
+  l2Sq.style.left='18px'; l2Sq.style.top='12px';
+  l2Sq.classList.remove('snapped');
+  document.getElementById('lvl2Prompt').textContent=
+    '🦕 Choose where the dino should walk — or first drag the set square to mark the height foot!';
+  document.getElementById('btnC').style.display='none';
+  document.getElementById('btnReveal').style.display='none';
+}
+
+function l2WalkTo(tx,ty,isWrong){
+  if(l2.state!=='choose'&&l2.state!=='sq_drag')return;
+  // Force into choose state so movement logic works
+  if(l2.state==='sq_drag')l2.state='choose';
+  l2.state=isWrong?'moving_wrong':'moving_right';
+  l2.targetX=tx; l2.targetY=ty;
+  l2.trailPts=[];
+  document.getElementById('btnC').style.display='none';
+  document.getElementById('lvl2Prompt').textContent=
+    isWrong?'🦕 Walking towards the corner...':'🦕 Walking straight down...';
+}
+
+document.getElementById('btnLeft').addEventListener('click',()=>l2WalkTo(l2.Ax,l2.Ay,true));
+document.getElementById('btnRight').addEventListener('click',()=>l2WalkTo(l2.Bx,l2.By,true));
+document.getElementById('btnC').addEventListener('click',()=>l2WalkTo(l2.Fx,l2.Fy,false));
+document.getElementById('btnReveal').addEventListener('click',()=>{
+  l2.state='revealed';
+  document.getElementById('btnReveal').style.display='none';
+  document.getElementById('lvl2Prompt').textContent=
+    '✓ The dino drew the HEIGHT of the triangle!\nThe height is always perpendicular (90°) to the base.';
+  // Show congratulations overlay after a short pause
+  setTimeout(showL2Congrats, 2200);
+});
+
+function updateLevel2(){
+  l2.animT++;
+  l2.dinoFrameT++;
+  if(l2.dinoFrameT>10){l2.dinoFrame=(l2.dinoFrame+1)%2;l2.dinoFrameT=0;}
+
+  if(l2.state==='moving_wrong'||l2.state==='moving_right'){
+    const speed=1.8;
+    const dx=l2.targetX-l2.dinoX, dy=l2.targetY-l2.dinoY;
+    const dist=Math.hypot(dx,dy);
+    if(dist<speed+0.5){
+      l2.dinoX=l2.targetX; l2.dinoY=l2.targetY;
+      if(l2.state==='moving_wrong'){
+        l2.state='error'; l2.errorTimer=90;
+        document.getElementById('lvl2Prompt').textContent=
+          `❌ Not the height! That's just a corner.\nTry again — drag the set square, then choose!`;
+      }else{
+        l2.state='arrived';
+        document.getElementById('btnReveal').style.display='';
+        document.getElementById('lvl2Prompt').textContent=
+          '🦕 The dino stopped and drew a straight line from the top down!\nWhat do you think the dino drew? Tap the button to find out!';
+      }
+    }else{
+      l2.dinoX+=dx/dist*speed; l2.dinoY+=dy/dist*speed;
+    }
+    if(l2.animT%2===0)l2.trailPts.push({x:l2.dinoX,y:l2.dinoY,life:1,wrong:l2.state==='moving_wrong'});
+  }
+
+  if(l2.state==='error'){
+    l2.errorTimer--;
+    if(l2.errorTimer<=0){
+      // Reset dino back to vertex C, restore choose state
+      l2.dinoX=l2.Cx; l2.dinoY=l2.Cy;
+      l2.trailPts=[];
+      l2.state='choose';
+      document.getElementById('btnC').style.display='';
+      document.getElementById('lvl2Prompt').textContent=
+        '✓ Set square placed at the right angle corner!\nNow choose where the dino should walk: A, B, or C.';
+    }
+  }
+
+  for(const pt of l2.trailPts)pt.life-=0.005;
+  l2.trailPts=l2.trailPts.filter(p=>p.life>0);
+}
+
+function drawLevel2(){
+  const W=canvas2.width,H=canvas2.height,s=W/BASE_W;
+  ctx2.clearRect(0,0,W,H);
+  ctx2.save();ctx2.scale(s,s);
+
+  // Background
+  const bg=ctx2.createLinearGradient(0,0,0,BASE_H);
+  bg.addColorStop(0,'#0a1a30');bg.addColorStop(1,'#06120e');
+  ctx2.fillStyle=bg;ctx2.fillRect(0,0,BASE_W,BASE_H);
+  const CELL=28;
+  ctx2.strokeStyle='rgba(60,140,80,0.10)';ctx2.lineWidth=1;
+  for(let x=0;x<BASE_W;x+=CELL){ctx2.beginPath();ctx2.moveTo(x,0);ctx2.lineTo(x,BASE_H);ctx2.stroke();}
+  for(let y=0;y<BASE_H;y+=CELL){ctx2.beginPath();ctx2.moveTo(0,y);ctx2.lineTo(BASE_W,y);ctx2.stroke();}
+  ctx2.fillStyle='rgba(60,180,80,0.15)';
+  for(let x=0;x<BASE_W;x+=CELL)for(let y=0;y<BASE_H;y+=CELL)ctx2.fillRect(x-1,y-1,2,2);
+
+  const{Ax,Ay,Bx,By,Cx,Cy,Fx,Fy}=l2;
+
+  // Triangle fill + edges
+  ctx2.fillStyle='rgba(255,140,40,0.15)';
+  ctx2.beginPath();ctx2.moveTo(Ax,Ay);ctx2.lineTo(Bx,By);ctx2.lineTo(Cx,Cy);ctx2.closePath();ctx2.fill();
+  ctx2.strokeStyle='#ffb060';ctx2.lineWidth=2.5;
+  ctx2.beginPath();ctx2.moveTo(Ax,Ay);ctx2.lineTo(Bx,By);ctx2.lineTo(Cx,Cy);ctx2.closePath();ctx2.stroke();
+
+  // BASE label — text only, no indicator line
+  ctx2.fillStyle='#fbbf24';ctx2.font='bold 14px Trebuchet MS,sans-serif';ctx2.textAlign='center';
+  ctx2.fillText('base',(Ax+Bx)/2,Ay+22);
+
+  // Vertex labels A, B, C (apex)
+  ctx2.font='bold 14px Trebuchet MS,sans-serif';
+  ctx2.fillStyle='#fbbf24';ctx2.textAlign='right';ctx2.fillText('A',Ax-8,Ay+5);
+  ctx2.fillStyle='#60c8ff';ctx2.textAlign='left';ctx2.fillText('B',Bx+8,By+5);
+  ctx2.fillStyle='#22cc88';ctx2.textAlign='center';ctx2.fillText('C (vertex)',Cx,Cy-14);
+
+  // Target zone ring at foot (always shown as hint)
+  ctx2.strokeStyle='rgba(74,222,128,0.3)';ctx2.lineWidth=2;
+  ctx2.beginPath();ctx2.arc(Fx,Fy,18,0,Math.PI*2);ctx2.stroke();
+
+  // Pulsing rings on A and B during 'choose'
+  if(l2.state==='choose'||l2.state==='sq_drag'){
+    const pulse=0.3+Math.abs(Math.sin(l2.animT*.08))*0.5;
+    ctx2.globalAlpha=pulse;
+    ctx2.strokeStyle='#fbbf24';ctx2.lineWidth=2;
+    ctx2.beginPath();ctx2.arc(Ax,Ay,14,0,Math.PI*2);ctx2.stroke();
+    ctx2.strokeStyle='#60c8ff';
+    ctx2.beginPath();ctx2.arc(Bx,By,14,0,Math.PI*2);ctx2.stroke();
+    ctx2.globalAlpha=1;
+  }
+
+  // Trail dots
+  for(const pt of l2.trailPts){
+    ctx2.globalAlpha=pt.life;
+    ctx2.fillStyle=pt.wrong?'#f87171':'#4ade80';
+    ctx2.beginPath();ctx2.arc(pt.x,pt.y,4,0,Math.PI*2);ctx2.fill();
+  }
+  ctx2.globalAlpha=1;
+
+  // Error flash X marks at wrong destination
+  if(l2.state==='error'&&l2.errorTimer>60){
+    const f=Math.min(1,(l2.errorTimer-60)/30);
+    ctx2.globalAlpha=f;
+    ctx2.strokeStyle='#f87171';ctx2.lineWidth=3;
+    const ex=l2.targetX,ey=l2.targetY,er=12;
+    ctx2.beginPath();ctx2.moveTo(ex-er,ey-er);ctx2.lineTo(ex+er,ey+er);ctx2.stroke();
+    ctx2.beginPath();ctx2.moveTo(ex+er,ey-er);ctx2.lineTo(ex-er,ey+er);ctx2.stroke();
+    ctx2.globalAlpha=1;
+  }
+
+  // Completed height line + right angle marker (arrived/revealed)
+  if(l2.state==='arrived'||l2.state==='revealed'){
+    ctx2.strokeStyle='#4ade80';ctx2.lineWidth=3;
+    ctx2.beginPath();ctx2.moveTo(Cx,Cy);ctx2.lineTo(Fx,Fy);ctx2.stroke();
+    const m=13;
+    ctx2.strokeStyle='#fff';ctx2.lineWidth=2.2;
+    ctx2.beginPath();ctx2.moveTo(Fx+m,Fy);ctx2.lineTo(Fx+m,Fy-m);ctx2.lineTo(Fx,Fy-m);ctx2.stroke();
+    ctx2.fillStyle='rgba(90,255,160,0.18)';ctx2.fillRect(Fx,Fy-m,m,m);
+    // height label intentionally omitted — students discover this
+  }
+  if(l2.state==='revealed'){
+    // 90° marker
+    ctx2.fillStyle='#fff';ctx2.font='bold 14px Trebuchet MS,sans-serif';ctx2.textAlign='left';
+    ctx2.fillText('90°',Fx+6,Fy-16);
+    // height label beside the line
+    ctx2.save();ctx2.translate(Fx-18,(Cy+Fy)/2);ctx2.rotate(-Math.PI/2);
+    ctx2.fillStyle='#4ade80';ctx2.font='bold 13px Trebuchet MS,sans-serif';ctx2.textAlign='center';
+    ctx2.fillText('height',0,0);ctx2.restore();
+  }
+
+  // Dino — smaller size
+  const dw=28,dh=34;
+  drawDino(ctx2,l2.dinoX-dw/2,l2.dinoY-dh,dw,dh,1,l2.dinoFrame,true);
+
+  ctx2.restore();
+}
+
+// ═══════════════════ RESTART ════════════════════
+document.getElementById('restartBtn').addEventListener('click',()=>{currentLevel=1;initGame();});
+document.getElementById('overlayBtn').addEventListener('click',()=>{currentLevel=1;initGame();});
+
+function showL2Congrats(){
+  document.getElementById('l2CongratsOverlay').classList.add('show');
+}
+document.getElementById('l2CongratsBtn').addEventListener('click',()=>{
+  document.getElementById('l2CongratsOverlay').classList.remove('show');
+  currentLevel=1;initGame();
+});
+
+initGame();
+loop();
+</script>
+</body>
+</html>
